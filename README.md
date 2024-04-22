@@ -75,6 +75,7 @@ An illustration of how α-UMi works to complete a task with reflection.
 
 | Model | 7b | 13b |
 |-------|----|----|
+| backbone (GLPFT steage 1 checkpoint) | -/[modelscope](https://www.modelscope.cn/models/iic/alpha-umi-backbone-7b) | -/[modelscope](https://www.modelscope.cn/models/iic/alpha-umi-backbone-13b)|
 | planner | [huggingface](https://huggingface.co/shenwzh3/alpha-umi-planner-7b)  / [modelscope](https://www.modelscope.cn/models/iic/alpha-umi-planner-7b) | [huggingface](https://huggingface.co/shenwzh3/alpha-umi-planner-13b)  / [modelscope](https://www.modelscope.cn/models/iic/alpha-umi-planner-13b) |
 | caller | [huggingface](https://huggingface.co/shenwzh3/alpha-umi-caller-7b)  / [modelscope](https://www.modelscope.cn/models/iic/alpha-umi-caller-7b) | [huggingface](https://huggingface.co/shenwzh3/alpha-umi-caller-13b)  / [modelscope](https://www.modelscope.cn/models/iic/alpha-umi-caller-13b) |
 | summarizer | [huggingface](https://huggingface.co/shenwzh3/alpha-umi-summarizer-7b)  / [modelscope](https://www.modelscope.cn/models/iic/alpha-umi-summarizer-7b) | [huggingface](https://huggingface.co/shenwzh3/alpha-umi-summarizer-13b)  / [modelscope](https://www.modelscope.cn/models/iic/alpha-umi-summarizer-13b) |
