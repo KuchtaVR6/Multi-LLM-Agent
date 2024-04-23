@@ -67,6 +67,7 @@ English | [简体中文](README_zh.md)
 
 
 ## 更新
+* [04.23] 我们已经将预处理好的训练数据上传到了 [modelscope](https://modelscope.cn/datasets/shenweizhou/alpha-umi-toolbench-processed-json_format/summary)！ 现在您可以直接下载并使用这个数据，不需要下面的预处理步骤。
 * [01.30] 我们发布了✨α-UMi的代码，以及它的模型参数。
 
 

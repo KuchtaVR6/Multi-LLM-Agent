@@ -69,6 +69,7 @@ An illustration of how α-UMi works to complete a task with reflection.
 
 
 ## News
+* [04.23] We have now uploaded the processed data in [modelscope](https://modelscope.cn/datasets/shenweizhou/alpha-umi-toolbench-processed-json_format/summary)! You can directly download the data and use without any preprocess.
 * [01.30] We released code of ✨α-UMi with its pre-trained and instruction tuning checkpoints.
 
 ## Checkpoints
@@ -104,7 +105,7 @@ pip install -r requirements.txt
 
 ### Data Preparation
 
-**NOTE:** We are now uploading the processed data in [modelscope](https://modelscope.cn/datasets/shenweizhou/alpha-umi-toolbench-processed-json_format/summary)! You can directly download the data and use without any preprocess.
+**NOTE:** We have now uploaded the processed data in [modelscope](https://modelscope.cn/datasets/shenweizhou/alpha-umi-toolbench-processed-json_format/summary)! You can directly download the data and use without any preprocess.
 
 #### ToolBench
 1. First download the oringinal ToolBench dataset from [Google Drive](https://drive.google.com/drive/folders/1yBUQ732mPu-KclJnuQELEhtKakdXFc3J) or [Tsinghua Cloud](https://cloud.tsinghua.edu.cn/f/c9e50625743b40bfbe10/), and put the data to ```./data``` folder.
