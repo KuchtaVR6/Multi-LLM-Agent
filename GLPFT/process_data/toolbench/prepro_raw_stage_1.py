@@ -59,4 +59,4 @@ for train_set in ["G1_answer", "G2_answer", "G3_answer"]:
             
 os.makedirs(args.output_path, exist_ok=True)
 with open(f"{args.output_path}/raw_data_stage_1.json", 'w') as f:
-    json.dump(data[:20],f, indent=2)
+    json.dump(data,f, indent=2)
