@@ -103,6 +103,8 @@ pip install -r requirements.txt
 
 ### 数据准备
 
+**NOTE:** 我们已经将预处理好的训练数据上传到了 [modelscope](https://modelscope.cn/datasets/shenweizhou/alpha-umi-toolbench-processed-json_format/summary)！ 现在您可以直接下载并使用这个数据，不需要下面的预处理步骤。
+
 #### ToolBench
 1. 首先从 [Google Drive](https://drive.google.com/drive/folders/1yBUQ732mPu-KclJnuQELEhtKakdXFc3J) 或 [Tsinghua Cloud](https://cloud.tsinghua.edu.cn/f/c9e50625743b40bfbe10/)下载ToolBench的原始数据集，并把数据放到 ```./data``` 路径下.
 
