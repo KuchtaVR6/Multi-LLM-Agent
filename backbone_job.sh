@@ -21,7 +21,7 @@ export TRANSFORMERS_CACHE=/exports/eddie/scratch/s2595201/hugging_face_cache
 
 # Activate the conda environment for CUDA
 source ../miniconda3/bin/activate base
-conda activate umi
+conda activate umi_vanilla
 
 cd ./GLPFT
 

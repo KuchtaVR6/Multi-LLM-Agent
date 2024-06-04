@@ -21,7 +21,7 @@ export TRANSFORMERS_CACHE=/exports/eddie/scratch/s2595201/hugging_face_cache
 
 # Activate the conda environment for CUDA
 source ../miniconda3/bin/activate base
-conda activate umi
+conda activate umi_vanilla
 
 cd ./GLPFT
 
@@ -36,7 +36,6 @@ LAB_DIR=output_res/toolbench
 P_TYPE_PLAN=toolbench_planner
 P_TYPE_CAL=toolbench_caller
 P_TYPE_SUM=toolbench_summarizer
-
 
 for DOMAIN in 'in_domain' 'out_of_domain'
 do
@@ -56,7 +55,6 @@ do
 	--summarizer_prompt_type $P_TYPE_SUM \
         --max_input_length 3750 \
         --output_dir $LAB_DIR/$DOMAIN \
-	--num_infer_samples 10
 
     python inference_utils/toolbench/evaluate-multi_agent.py \
     --input_path $LAB_DIR/$DOMAIN/predictions.json \

@@ -2,6 +2,7 @@
 
 # 1st arg - job name and inner script subname
 # 2nd arg - number of gpus
+# 3rd arg - conda env suffix (optional)
 
 # Define the job script file name based on the first argument
 job_script="${1}_job.sh"
@@ -42,7 +43,7 @@ echo "" >> "$job_script"
 echo "# Activate the conda environment for CUDA" >> "$job_script"
 echo "source ../miniconda3/bin/activate base" >> "$job_script"
 
-echo "conda activate umi" >> "$job_script"
+echo "conda activate umi${3}" >> "$job_script"
 echo "" >> "$job_script"
 
 cat "$inner_script" >> "$job_script"
