@@ -12,7 +12,7 @@ P_TYPE_PLAN=toolbench_planner
 P_TYPE_CAL=toolbench_caller
 P_TYPE_SUM=toolbench_summarizer
 
-for DOMAIN in 'in_domain' 'out_of_domain'
+for DOMAIN in 'in_domain'
 do
     export PYTHONPATH=./
     torchrun --nproc_per_node=$NNODE --master_port=$PORT inference_utils/toolbench/infer_pipeline.py \

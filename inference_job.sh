@@ -1,13 +1,13 @@
 #!/bin/bash
 
-export NNODE=1 # num of GPUs
+export NNODE=2 # num of GPUs
 
 # Grid Engine options
 #$ -N inference  # Name of the job
 #$ -cwd           # Run the job from the current working directory
 #$ -l h_rt=10:00:00  # Request a runtime
 #$ -q gpu          # Submit the job to the gpu queue
-#$ -pe gpu-a100 1  # Request NNODE A100 GPUs
+#$ -pe gpu-a100 2  # Request NNODE A100 GPUs
 #$ -l h_vmem=80G    # Request memory per core
 
 # Load the module system
@@ -37,7 +37,7 @@ P_TYPE_PLAN=toolbench_planner
 P_TYPE_CAL=toolbench_caller
 P_TYPE_SUM=toolbench_summarizer
 
-for DOMAIN in 'in_domain' 'out_of_domain'
+for DOMAIN in 'in_domain'
 do
     export PYTHONPATH=./
     torchrun --nproc_per_node=$NNODE --master_port=$PORT inference_utils/toolbench/infer_pipeline.py \

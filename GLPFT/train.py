@@ -240,7 +240,7 @@ def make_supervised_data_module(
 def train():
     global local_rank
 
-    
+    torch.cuda.memory._record_memory_history()    
 
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
@@ -248,6 +248,7 @@ def train():
 
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     random.seed(training_args.seed)
+
     np.random.seed(training_args.seed)
     if is_torch_available():
         torch.manual_seed(training_args.seed)
@@ -277,9 +278,14 @@ def train():
     tokenizer.pad_token = tokenizer.unk_token
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
+    
+    model.cuda()
+
     trainer = Trainer(
         model=model, tokenizer=tokenizer, args=training_args, **data_module
     )
+
+    torch.cuda.memory._dump_snapshot("memory.pickle")
 
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
         trainer.train(resume_from_checkpoint=True)
@@ -289,6 +295,7 @@ def train():
     if trainer.is_local_process_zero():
         model.save_pretrained(training_args.output_dir)
     trainer.save_state()
+    torch.cuda.memory._dump_snapshot("memory.pickle")
     safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
 
 

@@ -1,13 +1,13 @@
 #!/bin/bash
 
-export NNODE=2 # num of GPUs
+# export NNODE=1 # num of GPUs
 
 # Grid Engine options
-#$ -N backbone  # Name of the job
+#$ -N caller  # Name of the job
 #$ -cwd           # Run the job from the current working directory
 #$ -l h_rt=10:00:00  # Request a runtime
 #$ -q gpu          # Submit the job to the gpu queue
-#$ -pe gpu-a100 2  # Request NNODE A100 GPUs
+#$ -pe gpu-a100 1  # Request NNODE A100 GPUs
 #$ -l h_vmem=80G    # Request memory per core
 
 # Load the module system
@@ -25,16 +25,16 @@ conda activate umi_vanilla
 
 cd ./GLPFT
 
-LLAMA_PATH="meta-llama/Llama-2-7b-hf" # your path for initial LLM checkpoint
+BB_PATH="saved_models/toolbench/backbone" # your path for initial LLM checkpoint
 PORT=12345
-BSZ=1
-GA=8
+BSZ=8
+GA=1
 
-EXP_NAME=/toolbench/backbone_trained  # path to save model
+EXP_NAME=/toolbench/caller  # path to save model
 export PYTHONPATH=./
-python train_mem.py \
-    --model_name_or_path $LLAMA_PATH  \
-    --data_path dataset/toolbench/train/train_backbone.json\
+python train_lora.py \
+    --model_name_or_path $BB_PATH  \
+    --data_path dataset/toolbench/train/train_planner.json\
     --output_dir saved_models/$EXP_NAME \
     --num_train_epochs 2 \
     --per_device_train_batch_size $BSZ \

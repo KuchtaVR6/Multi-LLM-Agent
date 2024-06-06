@@ -1,15 +1,15 @@
 cd ./GLPFT
 
-LLAMA_PATH="meta-llama/Llama-2-7b-hf" # your path for initial LLM checkpoint
+BB_PATH="saved_models/toolbench/backbone" # your path for initial LLM checkpoint
 PORT=12345
-BSZ=1
-GA=8
+BSZ=8
+GA=1
 
-EXP_NAME=/toolbench/backbone_trained  # path to save model
+EXP_NAME=/toolbench/caller  # path to save model
 export PYTHONPATH=./
 python train_lora.py \
-    --model_name_or_path $LLAMA_PATH  \
-    --data_path dataset/toolbench/train/train_backbone.json\
+    --model_name_or_path $BB_PATH  \
+    --data_path dataset/toolbench/train/train_planner.json\
     --output_dir saved_models/$EXP_NAME \
     --num_train_epochs 2 \
     --per_device_train_batch_size $BSZ \

@@ -1,6 +1,9 @@
 *.log
 *.out
-/GLPFT/dataset/*
+
+*.pickle
+GLPFT/dataset/**
+
 /**/__pycache__
 /**/output_res
 /**/saved_models
