@@ -20,8 +20,6 @@ import logging
 import pathlib
 import typing
 import os
-
-import torch
 from deepspeed import zero
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
 from peft import LoraConfig, get_peft_model
@@ -37,7 +35,6 @@ from train import (
 from utils.llama_flash_attn_monkey_patch import (
     replace_llama_attn_with_flash_attn,
 )
-
 
 # replace_llama_attn_with_flash_attn() # TODO REVERT
 
@@ -91,8 +88,6 @@ def get_peft_state_maybe_zero_3(named_params, bias):
 
 
 def train():
-    torch.cuda.memory._record_memory_history()
-
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments, LoraArguments)
     )
@@ -109,7 +104,6 @@ def train():
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
-        torch_dtype=torch.bfloat16
     )
     lora_config = LoraConfig(
         r=lora_args.lora_r,
@@ -120,8 +114,8 @@ def train():
         task_type="CAUSAL_LM",
     )
     model = get_peft_model(model, lora_config)
-    # if training_args.deepspeed is not None and training_args.local_rank == 0:
-    #     model.print_trainable_parameters() # TODO REMOVE NOT GONNA USE DEEPSPEED
+    if training_args.deepspeed is not None and training_args.local_rank == 0:
+        model.print_trainable_parameters()
 
     if training_args.gradient_checkpointing:
         logging.warning(
@@ -131,14 +125,13 @@ def train():
             "https://github.com/lm-sys/FastChat/pull/138#issuecomment-1509172198"
         )
         model.enable_input_require_grads()
-
+        
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,
         padding_side="right",
         use_fast=False,
-        bf16=True
     )
     tokenizer.pad_token = tokenizer.unk_token
 
@@ -162,9 +155,7 @@ def train():
     if trainer.is_world_process_zero():
         model = model.merge_and_unload()
         model.save_pretrained(training_args.output_dir)
-        tokenizer.save_pretrained(training_args.output_dir) # TODO REMOVE THE IF
-
-    torch.cuda.memory._dump_snapshot("memory.pickle")
+        tokenizer.save_pretrained(training_args.output_dir)
 
 
 if __name__ == "__main__":
