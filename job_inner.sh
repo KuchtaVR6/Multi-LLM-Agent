@@ -2,7 +2,7 @@
 
 cd GLPFT
 
-INPUT_MODEL="meta-llama/Llama-2-7b-hf"
+INPUT_MODEL="EleutherAI/pythia-160m"
 BSZ=1
 GA=8
 
@@ -24,8 +24,7 @@ python train_lora.py \
     --warmup_ratio 0.4 \
     --lr_scheduler_type "cosine" \
     --gradient_checkpointing True \
-    --bf16 \
     --logging_steps 2 \
-    --model_max_length 4096 \
+    --model_max_length 2048 \
     --report_to none \
     --lazy_preprocess True

@@ -19,11 +19,10 @@ from dataclasses import dataclass, field
 import logging
 import pathlib
 import typing
-import os
 
 import torch
-from deepspeed import zero
-from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
+from deepspeed import zero      # TODO REMOVE
+from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus     # TODO REMOVE
 from peft import LoraConfig, get_peft_model
 import transformers
 from transformers import Trainer
@@ -47,9 +46,9 @@ class LoraArguments:
     lora_r: int = 8
     lora_alpha: int = 16
     lora_dropout: float = 0.05
-    lora_target_modules: typing.List[str] = field(
-        default_factory=lambda: ["q_proj", "v_proj"]
-    )
+    # lora_target_modules: typing.List[str] = field(
+    #     default_factory=lambda: ["q_proj", "v_proj"]
+    # ) # TODO REVERT
     lora_weight_path: str = ""
     lora_bias: str = "none"
 
@@ -61,7 +60,7 @@ def maybe_zero_3(param):
             param = param.data.detach().cpu().clone()
     else:
         param = param.detach().cpu().clone()
-    return param
+    return param            # TODO REMOVE
 
 
 # Borrowed from peft.utils.get_peft_model_state_dict
@@ -106,20 +105,23 @@ def train():
     # world_size = int(os.environ.get("WORLD_SIZE", 1))
     # ddp = world_size != 1
     # device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)} if ddp else None # TODO REMOVE IF WORKS WITHOUT
+
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
         torch_dtype=torch.bfloat16
     )
-    lora_config = LoraConfig(
-        r=lora_args.lora_r,
-        lora_alpha=lora_args.lora_alpha,
-        target_modules=lora_args.lora_target_modules,
-        lora_dropout=lora_args.lora_dropout,
-        bias=lora_args.lora_bias,
-        task_type="CAUSAL_LM",
-    )
-    model = get_peft_model(model, lora_config)
+
+    # lora_config = LoraConfig(
+    #     r=lora_args.lora_r,
+    #     lora_alpha=lora_args.lora_alpha,
+    #     target_modules="all-linear", # TODO REVERT TO lora_args.lora_target_modules,
+    #     lora_dropout=lora_args.lora_dropout,
+    #     bias=lora_args.lora_bias,
+    #     task_type="CAUSAL_LM",
+    # )
+    # model = get_peft_model(model, lora_config) # TODO REVERT REMOVING LoRA
+
     # if training_args.deepspeed is not None and training_args.local_rank == 0:
     #     model.print_trainable_parameters() # TODO REMOVE NOT GONNA USE DEEPSPEED
 
@@ -134,12 +136,14 @@ def train():
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
-        cache_dir=training_args.cache_dir,
+    #     cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,
-        padding_side="right",
-        use_fast=False,
-        bf16=True
+    #     padding_side="right",
+    #     use_fast=False,
+    #     bf16=True
     )
+
+
     tokenizer.pad_token = tokenizer.unk_token
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
@@ -155,14 +159,9 @@ def train():
         trainer.train()
     trainer.save_state()
 
-    # Save states. Weights might be a placeholder in zero3 and need a gather
-    state_dict = get_peft_state_maybe_zero_3(
-        model.named_parameters(), lora_args.lora_bias
-    )
-    if trainer.is_world_process_zero():
-        model = model.merge_and_unload()
-        model.save_pretrained(training_args.output_dir)
-        tokenizer.save_pretrained(training_args.output_dir) # TODO REMOVE THE IF
+    # model = model.merge_and_unload() # TODO REVERT WHEN LORA IS REVERTED
+    model.save_pretrained(training_args.output_dir)
+    tokenizer.save_pretrained(training_args.output_dir)
 
     torch.cuda.memory._dump_snapshot("memory.pickle")
 

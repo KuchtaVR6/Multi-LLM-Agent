@@ -4,12 +4,14 @@
 TARGET=$1
 MODEL=$2
 USE_LORA=$3
+CONTEXT_LENGTH=4096
 
 # Determine the input model based on the second parameter
 if [[ $MODEL == "LLAMA" ]]; then
     INPUT_MODEL="meta-llama/Llama-2-7b-hf"
 elif [[ $MODEL == "PYTHIA" ]]; then
     INPUT_MODEL="EleutherAI/pythia-160m"
+    CONTEXT_LENGTH=2048
 else
     INPUT_MODEL="saved_models/toolbench/${TARGET}_trained"
 fi
@@ -28,8 +30,8 @@ cat << EOF > job_inner.sh
 cd GLPFT
 
 INPUT_MODEL="${INPUT_MODEL}"
-BSZ=1
-GA=8
+BSZ=8
+GA=1
 
 EXP_NAME=/toolbench/${TARGET}_trained
 python ${SCRIPT}.py \\
@@ -49,9 +51,8 @@ python ${SCRIPT}.py \\
     --warmup_ratio 0.4 \\
     --lr_scheduler_type "cosine" \\
     --gradient_checkpointing True \\
-    --bf16 \\
     --logging_steps 2 \\
-    --model_max_length 4096 \\
+    --model_max_length ${CONTEXT_LENGTH} \\
     --report_to none \\
     --lazy_preprocess True
 EOF
