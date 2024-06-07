@@ -1,2 +1,13 @@
+*.log
+*.out
+
+/.idea
+
+*.pickle
+GLPFT/dataset/**
+
+/**/__pycache__
+/**/output_res
+/**/saved_models
 .DS_Store
 assets/.DS_Store
