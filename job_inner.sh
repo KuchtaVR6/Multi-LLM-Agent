@@ -2,9 +2,9 @@
 
 cd GLPFT
 
-INPUT_MODEL="facebook/opt-125m"
-BSZ=1
-GA=8
+INPUT_MODEL="EleutherAI/pythia-160m"
+BSZ=4
+GA=2
 
 EXP_NAME=/toolbench/backbone_trained
 python train_mine.py \
@@ -25,7 +25,8 @@ python train_mine.py \
     --lr_scheduler_type "cosine" \
     --gradient_checkpointing True \
     --logging_steps 2 \
-    --model_max_length 4096 \
+    --model_max_length 2048 \
     --report_to none \
     --lazy_preprocess False \
-    --lora true
+    --lora true \
+    --lora_target_modules query_key_value \

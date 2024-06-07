@@ -100,7 +100,7 @@ def train():
 
     # world_size = int(os.environ.get("WORLD_SIZE", 1))
     # ddp = world_size != 1
-    # device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)} if ddp else None # TODO REMOVE IF WORKS WITHOUT
+    # device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)} if ddp else None
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,

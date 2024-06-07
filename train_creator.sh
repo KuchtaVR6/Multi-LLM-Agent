@@ -12,10 +12,7 @@ if [[ $MODEL == "LLAMA" ]]; then
 elif [[ $MODEL == "PYTHIA" ]]; then
     INPUT_MODEL="EleutherAI/pythia-160m"
     CONTEXT_LENGTH=2048
-elif [[ $MODEL == "OPT" ]]; then
-    INPUT_MODEL="facebook/opt-125m"
-elif [[ $MODEL == "GPT2" ]]; then
-    INPUT_MODEL="distilbert/distilgpt2"
+    TARGET_MODULES="query_key_value"
 else
     INPUT_MODEL="saved_models/toolbench/${TARGET}_trained"
 fi
@@ -27,8 +24,8 @@ cat << EOF > job_inner.sh
 cd GLPFT
 
 INPUT_MODEL="${INPUT_MODEL}"
-BSZ=1
-GA=8
+BSZ=4
+GA=2
 
 EXP_NAME=/toolbench/${TARGET}_trained
 python train_mine.py \\
@@ -52,8 +49,13 @@ python train_mine.py \\
     --model_max_length ${CONTEXT_LENGTH} \\
     --report_to none \\
     --lazy_preprocess False \\
-    --lora ${USE_LORA==true}
+    --lora ${USE_LORA==true} \\
 EOF
+
+# Conditionally add the line if TARGET_MODULES is set
+if [[ -n $TARGET_MODULES ]]; then
+    echo "    --lora_target_modules ${TARGET_MODULES} \\" >> job_inner.sh
+fi
 
 # Make the generated script executable
 chmod +x job_inner.sh
