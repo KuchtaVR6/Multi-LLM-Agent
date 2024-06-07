@@ -1,5 +1,5 @@
 # Usage: deepspeed train_lora.py --deepspeed <$PATH_TO_DEEPSPEED_CONFIG>
-
+import pathlib
 # Adopted from tatsu-lab@stanford_alpaca. Below is the original copyright:
 #    Copyright 2023 Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li
 #
@@ -17,12 +17,9 @@
 
 from dataclasses import dataclass, field
 import logging
-import pathlib
 import typing
 
 import torch
-from deepspeed import zero      # TODO REMOVE
-from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus     # TODO REMOVE
 from peft import LoraConfig, get_peft_model
 import transformers
 from transformers import Trainer
@@ -43,50 +40,15 @@ from utils.llama_flash_attn_monkey_patch import (
 
 @dataclass
 class LoraArguments:
+    lora: bool = True
     lora_r: int = 8
     lora_alpha: int = 16
     lora_dropout: float = 0.05
-    # lora_target_modules: typing.List[str] = field(
-    #     default_factory=lambda: ["q_proj", "v_proj"]
-    # ) # TODO REVERT
+    lora_target_modules: typing.List[str] = field(
+        default_factory=lambda: ["q_proj", "v_proj"]
+    )
     lora_weight_path: str = ""
     lora_bias: str = "none"
-
-
-def maybe_zero_3(param):
-    if hasattr(param, "ds_id"):
-        assert param.ds_status == ZeroParamStatus.NOT_AVAILABLE
-        with zero.GatheredParameters([param]):
-            param = param.data.detach().cpu().clone()
-    else:
-        param = param.detach().cpu().clone()
-    return param            # TODO REMOVE
-
-
-# Borrowed from peft.utils.get_peft_model_state_dict
-def get_peft_state_maybe_zero_3(named_params, bias):
-    if bias == "none":
-        to_return = {k: t for k, t in named_params if "lora_" in k}
-    elif bias == "all":
-        to_return = {k: t for k, t in named_params if "lora_" in k or "bias" in k}
-    elif bias == "lora_only":
-        to_return = {}
-        maybe_lora_bias = {}
-        lora_bias_names = set()
-        for k, t in named_params:
-            if "lora_" in k:
-                to_return[k] = t
-                bias_name = k.split("lora_")[0] + "bias"
-                lora_bias_names.add(bias_name)
-            elif "bias" in k:
-                maybe_lora_bias[k] = t
-        for k, t in maybe_lora_bias:
-            if bias_name in lora_bias_names:
-                to_return[bias_name] = t
-    else:
-        raise NotImplementedError
-    to_return = {k: maybe_zero_3(v) for k, v in to_return.items()}
-    return to_return
 
 
 def train():
@@ -102,28 +64,22 @@ def train():
         lora_args,
     ) = parser.parse_args_into_dataclasses()
 
-    # world_size = int(os.environ.get("WORLD_SIZE", 1))
-    # ddp = world_size != 1
-    # device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)} if ddp else None # TODO REMOVE IF WORKS WITHOUT
-
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
         torch_dtype=torch.bfloat16
     )
 
-    # lora_config = LoraConfig(
-    #     r=lora_args.lora_r,
-    #     lora_alpha=lora_args.lora_alpha,
-    #     target_modules="all-linear", # TODO REVERT TO lora_args.lora_target_modules,
-    #     lora_dropout=lora_args.lora_dropout,
-    #     bias=lora_args.lora_bias,
-    #     task_type="CAUSAL_LM",
-    # )
-    # model = get_peft_model(model, lora_config) # TODO REVERT REMOVING LoRA
-
-    # if training_args.deepspeed is not None and training_args.local_rank == 0:
-    #     model.print_trainable_parameters() # TODO REMOVE NOT GONNA USE DEEPSPEED
+    if lora_args.lora:
+        lora_config = LoraConfig(
+            r=lora_args.lora_r,
+            lora_alpha=lora_args.lora_alpha,
+            target_modules=lora_args.lora_target_modules,
+            lora_dropout=lora_args.lora_dropout,
+            bias=lora_args.lora_bias,
+            task_type="CAUSAL_LM",
+        )
+        model = get_peft_model(model, lora_config)
 
     if training_args.gradient_checkpointing:
         logging.warning(
@@ -136,11 +92,10 @@ def train():
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
-    #     cache_dir=training_args.cache_dir,
+        cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,
-    #     padding_side="right",
-    #     use_fast=False,
-    #     bf16=True
+        padding_side="right",
+        bf16=True
     )
 
 
@@ -157,9 +112,11 @@ def train():
         trainer.train(resume_from_checkpoint=True)
     else:
         trainer.train()
+
     trainer.save_state()
 
-    # model = model.merge_and_unload() # TODO REVERT WHEN LORA IS REVERTED
+    if lora_args.lora:
+        model = model.merge_and_unload()
     model.save_pretrained(training_args.output_dir)
     tokenizer.save_pretrained(training_args.output_dir)
 

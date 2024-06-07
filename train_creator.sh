@@ -12,15 +12,12 @@ if [[ $MODEL == "LLAMA" ]]; then
 elif [[ $MODEL == "PYTHIA" ]]; then
     INPUT_MODEL="EleutherAI/pythia-160m"
     CONTEXT_LENGTH=2048
+elif [[ $MODEL == "OPT" ]]; then
+    INPUT_MODEL="facebook/opt-125m"
+elif [[ $MODEL == "GPT2" ]]; then
+    INPUT_MODEL="distilbert/distilgpt2"
 else
     INPUT_MODEL="saved_models/toolbench/${TARGET}_trained"
-fi
-
-# Determine the script to run based on the third parameter
-if [[ $USE_LORA == "true" ]]; then
-    SCRIPT="train_lora"
-else
-    SCRIPT="train_mem"
 fi
 
 # Create the output script
@@ -30,11 +27,11 @@ cat << EOF > job_inner.sh
 cd GLPFT
 
 INPUT_MODEL="${INPUT_MODEL}"
-BSZ=8
-GA=1
+BSZ=1
+GA=8
 
 EXP_NAME=/toolbench/${TARGET}_trained
-python ${SCRIPT}.py \\
+python train_mine.py \\
     --model_name_or_path \$INPUT_MODEL \\
     --data_path dataset/toolbench/train/train_${TARGET}.json\\
     --output_dir saved_models/\$EXP_NAME \\
@@ -54,7 +51,8 @@ python ${SCRIPT}.py \\
     --logging_steps 2 \\
     --model_max_length ${CONTEXT_LENGTH} \\
     --report_to none \\
-    --lazy_preprocess True
+    --lazy_preprocess False \\
+    --lora ${USE_LORA==true}
 EOF
 
 # Make the generated script executable
