@@ -25,6 +25,8 @@ fi
 cat << EOF > job_inner.sh
 #!/bin/bash
 
+cd GLPFT
+
 INPUT_MODEL="${INPUT_MODEL}"
 BSZ=1
 GA=8

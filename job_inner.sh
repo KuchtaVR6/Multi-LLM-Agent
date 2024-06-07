@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd GLPFT
+
 INPUT_MODEL="meta-llama/Llama-2-7b-hf"
 BSZ=1
 GA=8
