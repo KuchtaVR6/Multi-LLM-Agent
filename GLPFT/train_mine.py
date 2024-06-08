@@ -67,7 +67,7 @@ def train():
         lora_args,
     ) = parser.parse_args_into_dataclasses()
 
-    if False:  # is_bitsandbytes_available():
+    if False:  # TODO REVERT is_bitsandbytes_available():
         print("Using quantisation ..")
         bnb_config = BitsAndBytesConfig(load_in_4bit=True,
                                         bnb_4bit_quant_type="nf4",
@@ -122,7 +122,7 @@ def train():
     tokenizer.pad_token = tokenizer.unk_token
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
-    trainer = SFTTrainer(
+    trainer = Trainer( # TODO REVERT TO SFTTrainer
         model=model, tokenizer=tokenizer, args=training_args, **data_module
     )
 
