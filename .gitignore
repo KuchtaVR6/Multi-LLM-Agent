@@ -2,6 +2,8 @@
 *.out
 
 /.idea
+job_inner.sh
+/data/*
 
 *.pickle
 GLPFT/dataset/**
