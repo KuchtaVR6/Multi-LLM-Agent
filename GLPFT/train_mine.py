@@ -67,7 +67,7 @@ def train():
         lora_args,
     ) = parser.parse_args_into_dataclasses()
 
-    if is_bitsandbytes_available():
+    if False:  # is_bitsandbytes_available():
         print("Using quantisation ..")
         bnb_config = BitsAndBytesConfig(load_in_4bit=True,
                                         bnb_4bit_quant_type="nf4",
