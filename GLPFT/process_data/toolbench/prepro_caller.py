@@ -45,43 +45,75 @@ for p in data_paths:
 if not os.path.exists(os.path.dirname(args.output_path)):
     os.makedirs(os.path.dirname(args.output_path))
 
-
-
 new_data = []
+thought_ambiguous = 0
+thought_no_api = 0
+
+# Loop through each item in the 'data' list
 for d in data:
-    tool_docs = ""
+    tool_docs = ""  # Initialize an empty string to hold the tool documentation
+
+    # Loop through each tool in the current data item
     for t in d['tools']:
-        tool_docs += json.dumps(t) + '\n'    
-    tool_names = ', '.join([t['Name'] for t in d['tools']])
-    query_temp = prompt_temp.replace('{doc}', tool_docs).replace('{tool_names}',tool_names)
-    
-    history = ""
+        tool_docs += json.dumps(t) + '\n'  # Append the JSON representation of the tool to 'tool_docs'
+
+    # Create a comma-separated string of tool names
+    tool_list = [t['Name'] for t in d['tools']]
+    tool_names = ', '.join(tool_list)
+
+    # Replace placeholders in the prompt template with the actual tool documentation and tool names
+    query_temp = prompt_temp.replace('{doc}', tool_docs).replace('{tool_names}', tool_names)
+
+    history = ""  # Initialize an empty string to hold the conversation history
+
+    # Loop through each conversation in the current data item
     for i in range(len(d['conversations'])):
-        utter = d['conversations'][i]
+        utter = d['conversations'][i]  # Get the current utterance
+
+        # Append the utterance to the history based on its 'from' field
         if utter['from'] == 'assistant':
-            history += ('assistant: '+utter['value']+'</s>')
+            history += ('assistant: ' + utter['value'] + '</s>')
         elif utter['from'] == 'user':
-            history += ('user: '+utter['value']+'</s>')
+            history += ('user: ' + str(utter['value']) + '</s>')
         elif utter['from'] == 'observation':
-            history += ('observation: '+utter['value'])
+            history += ('observation: ' + utter['value'])
         elif utter['from'] == 'caller':
+            # Check for 'invalid_hallucination_function_name' in the caller's value
             if 'invalid_hallucination_function_name' in utter['value']:
-                pass
+                pass  # Skip if the condition is met
             else:
-                thought = d['conversations'][i-1]['value']
-                    
-                input = query_temp.replace('{history}',history).replace('{thought}', thought)
+                thought = d['conversations'][i - 1]['value']  # Get the previous utterance's value
+
+                # Replace placeholders in the query template with history and thought
+                input = query_temp.replace('{history}', history).replace('{thought}', thought)
+
+                tool_found = False
+                for tool_name in tool_list:
+                    if tool_name in thought:
+                        if tool_found:
+                            thought_ambiguous += 1
+                            break
+                        else:
+                            tool_found = True
+
+                if not tool_found:
+                    thought_no_api += 1
+
+                # Add a new entry to 'new_data' with the current tools, history up to the current point, input, and target
                 new_data.append({
-                    'tools':d['tools'],
-                    'history':d['conversations'][:i],
-                    'input':input+" caller: ",
+                    'tools': d['tools'],
+                    'history': d['conversations'][:i],
+                    'input': input + " caller: ",
                     'target': utter['value']
                 })
-                history += ('caller: '+utter['value']+'</s>')
+
+                # Append the caller's utterance to the history
+                history += ('caller: ' + utter['value'] + '</s>')
         elif utter['from'] == 'conclusion':
-            history += ('conclusion: '+utter['value']+'</s>')
+            history += ('conclusion: ' + utter['value'] + '</s>')
 
 print(len(new_data))
+print(thought_ambiguous, thought_no_api)
 
 with open(args.output_path,'w',encoding='utf-8') as f:
     json.dump(new_data,f, indent=2)
