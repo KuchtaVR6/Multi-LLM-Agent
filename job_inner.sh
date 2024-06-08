@@ -3,8 +3,6 @@
 cd GLPFT
 
 INPUT_MODEL="EleutherAI/pythia-160m"
-BSZ=4
-GA=2
 
 EXP_NAME=/toolbench/backbone_trained
 python train_mine.py \
@@ -12,10 +10,10 @@ python train_mine.py \
     --data_path dataset/toolbench/train/train_backbone.json\
     --output_dir saved_models/$EXP_NAME \
     --num_train_epochs 2 \
-    --per_device_train_batch_size $BSZ \
-    --per_device_eval_batch_size $BSZ \
-    --gradient_accumulation_steps $GA \
-    --evaluation_strategy "no" \
+    --per_device_train_batch_size 2 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 16 \
+    --eval_strategy "no" \
     --eval_steps 0 \
     --save_strategy "steps" \
     --save_steps 500 \

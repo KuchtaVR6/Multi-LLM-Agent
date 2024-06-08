@@ -22,7 +22,9 @@ import typing
 import torch
 from peft import LoraConfig, get_peft_model
 import transformers
-from transformers import Trainer
+from transformers import Trainer, BitsAndBytesConfig
+from transformers.utils import is_bitsandbytes_available, is_flash_attn_2_available
+
 from train import (
     DataArguments,
     ModelArguments,
@@ -35,7 +37,7 @@ from utils.llama_flash_attn_monkey_patch import (
 )
 
 
-replace_llama_attn_with_flash_attn()
+# replace_llama_attn_with_flash_attn()
 
 
 @dataclass
@@ -90,6 +92,19 @@ def train():
         )
         model.enable_input_require_grads()
 
+    if is_bitsandbytes_available():
+        print("Using quantisation ..")
+        bnb_config = BitsAndBytesConfig(load_in_4bit=True,
+                                        bnb_4bit_quant_type="nf4",
+                                        bnb_4bit_compute_dtype=torch.bfloat16)
+        model_kwargs = {'quantization_config': bnb_config}
+    else:
+        model_kwargs = {'torch_dtype': torch.bfloat16}
+
+    if is_flash_attn_2_available():
+        print("Using flash attention ..")
+        model_kwargs.update({"attn_implementation": "flash_attention_2"})
+
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -103,7 +118,7 @@ def train():
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     trainer = Trainer(
-        model=model, tokenizer=tokenizer, args=training_args, **data_module
+        model=model, tokenizer=tokenizer, args=training_args, **data_module, **model_kwargs
     )
 
     model.config.use_cache = False
