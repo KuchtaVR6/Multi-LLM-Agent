@@ -5,7 +5,14 @@ TARGET=$1
 MODEL=$2
 USE_LORA=$3
 BSZ=${4:-2}  # Default value of BSZ is 2 if not provided
-GA=$((32 / BSZ))  # Calculate GA based on BSZ to ensure BSZ * GA = 32
+
+# Calculate GA based on BSZ and USE_LORA
+if [[ $USE_LORA == true ]]; then
+    GA=$((32 / BSZ))  # Ensure BSZ * GA = 32 when using LoRA
+else
+    GA=$((8 / BSZ))   # Ensure BSZ * GA = 8 when not using LoRA
+fi
+
 CONTEXT_LENGTH=4096
 
 # Determine the input model based on the second parameter
