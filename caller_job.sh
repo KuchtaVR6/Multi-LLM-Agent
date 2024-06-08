@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# export NNODE=1 # num of GPUs
+export NNODE=1 # num of GPUs
 
 # Grid Engine options
 #$ -N caller  # Name of the job

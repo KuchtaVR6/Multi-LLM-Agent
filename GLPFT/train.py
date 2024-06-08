@@ -59,6 +59,7 @@ class DataArguments:
 class TrainingArguments(transformers.TrainingArguments):
     cache_dir: Optional[str] = field(default=None)
     optim: str = field(default="adamw_torch")
+    bf16: bool = True
     model_max_length: int = field(
         default=512,
         metadata={
@@ -266,6 +267,7 @@ def train():
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
+	torch_dtype=torch.bfloat16
     )
     model.config.use_cache = False
     tokenizer = transformers.AutoTokenizer.from_pretrained(
@@ -274,12 +276,11 @@ def train():
         model_max_length=training_args.model_max_length,
         padding_side="right",
         use_fast=False,
+	bf16=True
     )
     tokenizer.pad_token = tokenizer.unk_token
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
-    
-    model.cuda()
 
     trainer = Trainer(
         model=model, tokenizer=tokenizer, args=training_args, **data_module
