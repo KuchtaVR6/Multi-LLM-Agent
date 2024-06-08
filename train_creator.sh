@@ -36,7 +36,7 @@ python train_mine.py \\
     --per_device_train_batch_size ${BSZ} \\
     --per_device_eval_batch_size ${BSZ} \\
     --gradient_accumulation_steps ${GA} \\
-    --evaluation_strategy "no" \\
+    --eval_strategy "no" \\
     --eval_steps 0 \\
     --save_strategy "steps" \\
     --save_steps 500 \\
