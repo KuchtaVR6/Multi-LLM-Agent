@@ -4,6 +4,8 @@
 TARGET=$1
 MODEL=$2
 USE_LORA=$3
+BSZ=${4:-2}  # Default value of BSZ is 2 if not provided
+GA=$((32 / BSZ))  # Calculate GA based on BSZ to ensure BSZ * GA = 32
 CONTEXT_LENGTH=4096
 
 # Determine the input model based on the second parameter
@@ -24,8 +26,6 @@ cat << EOF > job_inner.sh
 cd GLPFT
 
 INPUT_MODEL="${INPUT_MODEL}"
-BSZ=4
-GA=2
 
 EXP_NAME=/toolbench/${TARGET}_trained
 python train_mine.py \\
@@ -33,9 +33,9 @@ python train_mine.py \\
     --data_path dataset/toolbench/train/train_${TARGET}.json\\
     --output_dir saved_models/\$EXP_NAME \\
     --num_train_epochs 2 \\
-    --per_device_train_batch_size \$BSZ \\
-    --per_device_eval_batch_size \$BSZ \\
-    --gradient_accumulation_steps \$GA \\
+    --per_device_train_batch_size ${BSZ} \\
+    --per_device_eval_batch_size ${BSZ} \\
+    --gradient_accumulation_steps ${GA} \\
     --evaluation_strategy "no" \\
     --eval_steps 0 \\
     --save_strategy "steps" \\
@@ -54,7 +54,9 @@ EOF
 
 # Conditionally add the line if TARGET_MODULES is set
 if [[ -n $TARGET_MODULES ]]; then
+  if [[ $USE_LORA == true ]]; then
     echo "    --lora_target_modules ${TARGET_MODULES} \\" >> job_inner.sh
+  fi
 fi
 
 # Make the generated script executable
