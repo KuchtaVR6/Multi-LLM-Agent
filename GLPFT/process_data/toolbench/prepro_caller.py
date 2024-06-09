@@ -121,6 +121,7 @@ for d in data:
 
                 if tool_used_after != mentioned_tool:
                     planner_caller_mismatch += 1
+                    continue
 
                 api_counts_certain[mentioned_tool].append(utterance)
 
