@@ -31,7 +31,7 @@ def nested_load_data(data_path):
             data += temp_train
         return data
     elif os.path.isfile(data_path) and data_path.endswith('.json'):
-        temp_data =  json.load(open(data_path, "r"))
+        temp_data = json.load(open(data_path, "r"))
         return temp_data
     else:
         return []
@@ -46,11 +46,14 @@ for p in data_paths:
 if not os.path.exists(os.path.dirname(args.output_path)):
     os.makedirs(os.path.dirname(args.output_path))
 
-new_data = []
+tool_utterance = 0
 thought_ambiguous = 0
 thought_not_usable = 0
 
-api_counts = defaultdict(int)
+planner_caller_mismatch = 0
+
+api_counts_certain = defaultdict(list)
+api_counts_all = defaultdict(list)
 
 # Loop through each item in the 'data' list
 for d in data:
@@ -85,49 +88,62 @@ for d in data:
             if 'invalid_hallucination_function_name' in utter['value']:
                 pass  # Skip if the condition is met
             else:
+                tool_utterance += 1
                 thought = d['conversations'][i - 1]['value']  # Get the previous utterance's value
 
                 # Replace placeholders in the query template with history and thought
                 input = query_temp.replace('{history}', history).replace('{thought}', thought)
 
-                tool_found = None
+                mentioned_tool = None
                 for tool_name in tool_list:
                     if tool_name in thought:
-                        if tool_found:
+                        if mentioned_tool:
                             thought_ambiguous += 1
-                            tool_found = None
+                            mentioned_tool = None
                             break
                         else:
-                            tool_found = tool_name
+                            mentioned_tool = tool_name
 
-                if not tool_found:
-                    thought_not_usable += 1
-                    continue
+                tool_used_after = utter['value'].split('\n')[0].split(' ')[1]
 
-                api_counts[tool_found] += 1
-
-                # Add a new entry to 'new_data' with the current tools, history up to the current point, input, and target
-                new_data.append({
+                utterance = {
                     'tools': d['tools'],
                     'history': d['conversations'][:i],
                     'input': input + " caller: ",
                     'target': utter['value']
-                })
+                }
+
+                api_counts_all[tool_used_after].append(utterance)
+
+                if not mentioned_tool:
+                    thought_not_usable += 1
+                    continue
+
+                if tool_used_after != mentioned_tool:
+                    planner_caller_mismatch += 1
+
+                api_counts_certain[mentioned_tool].append(utterance)
 
                 # Append the caller's utterance to the history
                 history += ('caller: ' + utter['value'] + '</s>')
         elif utter['from'] == 'conclusion':
             history += ('conclusion: ' + utter['value'] + '</s>')
 
-print(len(new_data))
-print(thought_ambiguous, thought_not_usable)
-
-# Sort the dictionary by count in descending order
-sorted_api_counts = sorted(api_counts.items(), key=lambda item: item[1], reverse=True)
-
-# Print the results line by line
-for api, count in sorted_api_counts:
-    print(f'{api}: {count}')
-
-with open(args.output_path,'w',encoding='utf-8') as f:
-    json.dump(new_data,f, indent=2)
+with open(args.output_path + 'api_report.txt', 'w', encoding='utf-8') as f:
+    f.write('tool_utterances,tool_choice_ambiguous,tool_not_found,one_tool,planner_caller_mismatch\n')
+    f.write(f'{tool_utterance},{thought_ambiguous},{thought_not_usable},{tool_utterance - thought_not_usable},'
+            f'{planner_caller_mismatch}\n')
+    f.write('='*5+' CERTAIN APIS '+'='*5+'\n')
+    f.write('api_name,count\n')
+    # Sort the dictionary by count in descending order
+    sorted_api_counts = sorted(api_counts_certain.items(), key=lambda item: len(item[1]), reverse=True)
+    # Print the results line by line
+    for api, cases in sorted_api_counts:
+        f.write(f'{api}, {len(cases)}\n')
+    f.write('='*5+' ALL APIS '+'='*5+'\n')
+    f.write('api_name,count\n')
+    # Sort the dictionary by count in descending order
+    sorted_api_counts = sorted(api_counts_all.items(), key=lambda item: len(item[1]), reverse=True)
+    # Print the results line by line
+    for api, cases in sorted_api_counts:
+        f.write(f'{api}, {len(cases)}\n')
