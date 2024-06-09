@@ -1,6 +1,7 @@
 import json
 import argparse
 import os
+from collections import defaultdict
 from utils.prompt_lib import prompt_dict
 
 parser = argparse.ArgumentParser()
@@ -47,7 +48,9 @@ if not os.path.exists(os.path.dirname(args.output_path)):
 
 new_data = []
 thought_ambiguous = 0
-thought_no_api = 0
+thought_not_usable = 0
+
+api_counts = defaultdict(int)
 
 # Loop through each item in the 'data' list
 for d in data:
@@ -87,17 +90,21 @@ for d in data:
                 # Replace placeholders in the query template with history and thought
                 input = query_temp.replace('{history}', history).replace('{thought}', thought)
 
-                tool_found = False
+                tool_found = None
                 for tool_name in tool_list:
                     if tool_name in thought:
                         if tool_found:
                             thought_ambiguous += 1
+                            tool_found = None
                             break
                         else:
-                            tool_found = True
+                            tool_found = tool_name
 
                 if not tool_found:
-                    thought_no_api += 1
+                    thought_not_usable += 1
+                    continue
+
+                api_counts[tool_found] += 1
 
                 # Add a new entry to 'new_data' with the current tools, history up to the current point, input, and target
                 new_data.append({
@@ -113,7 +120,14 @@ for d in data:
             history += ('conclusion: ' + utter['value'] + '</s>')
 
 print(len(new_data))
-print(thought_ambiguous, thought_no_api)
+print(thought_ambiguous, thought_not_usable)
+
+# Sort the dictionary by count in descending order
+sorted_api_counts = sorted(api_counts.items(), key=lambda item: item[1], reverse=True)
+
+# Print the results line by line
+for api, count in sorted_api_counts:
+    print(f'{api}: {count}')
 
 with open(args.output_path,'w',encoding='utf-8') as f:
     json.dump(new_data,f, indent=2)
