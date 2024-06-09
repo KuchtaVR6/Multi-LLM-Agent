@@ -1,6 +1,5 @@
 cd ./GLPFT
 
-ORI_DATA_DIR="../data" # your data path to save the toolbench raw data
 RAW_DATA_OUT_DIR="dataset/toolbench/train/raw_data"
 TRAIN_DATA_OUT_DIR="dataset/toolbench/train_mine"
 export PYTHONPATH=./
