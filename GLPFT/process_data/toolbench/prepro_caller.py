@@ -131,9 +131,9 @@ for d in data:
             history += ('conclusion: ' + utter['value'] + '</s>')
 
 with open(args.output_path + 'api_report.txt', 'w', encoding='utf-8') as f:
-    f.write('tool_utterances,tool_choice_ambiguous,tool_not_found,one_tool,planner_caller_mismatch\n')
-    f.write(f'{tool_utterance},{thought_ambiguous},{thought_not_usable},{tool_utterance - thought_not_usable},'
-            f'{planner_caller_mismatch}\n')
+    f.write('tool_utterances,tool_choice_ambiguous,tool_not_found,planner_caller_mismatch,certain_tool\n')
+    f.write(f'{tool_utterance},{thought_ambiguous},{thought_not_usable},'
+            f'{planner_caller_mismatch},{tool_utterance - thought_not_usable - planner_caller_mismatch},\n')
     f.write('='*5+' CERTAIN APIS '+'='*5+'\n')
     f.write('api_name,count\n')
     # Sort the dictionary by count in descending order
