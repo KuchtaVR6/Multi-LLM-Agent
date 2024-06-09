@@ -147,3 +147,22 @@ with open(args.output_path + 'api_report.txt', 'w', encoding='utf-8') as f:
     # Print the results line by line
     for api, cases in sorted_api_counts:
         f.write(f'{api}, {len(cases)}\n')
+
+
+all_apis_path = os.path.dirname(args.output_path+'all/')
+
+if not os.path.exists(all_apis_path):
+    os.makedirs(all_apis_path)
+
+for api, cases in api_counts_all.items():
+    with open(all_apis_path + f'/{api}.json', 'w', encoding='utf-8') as file:
+        json.dump(cases, file, indent=2)
+
+certain_apis_path = os.path.dirname(args.output_path + 'certain/')
+
+if not os.path.exists(certain_apis_path):
+    os.makedirs(certain_apis_path)
+
+for api, cases in api_counts_certain.items():
+    with open(certain_apis_path + f'/{api}.json', 'w', encoding='utf-8') as file:
+        json.dump(cases, file, indent=2)
