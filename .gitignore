@@ -2,9 +2,13 @@
 *.out
 
 /.idea
+/job_inner.sh
+/
 
 *.pickle
-GLPFT/dataset/**
+/GLPFT/dataset/**
+/data/**
+
 
 /**/__pycache__
 /**/output_res
