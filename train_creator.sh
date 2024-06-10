@@ -56,6 +56,7 @@ python train_mine.py \\
     --model_max_length ${CONTEXT_LENGTH} \\
     --report_to none \\
     --lazy_preprocess False \\
+    --bf16 True \\
     --lora ${USE_LORA==true} \\
 EOF
 
