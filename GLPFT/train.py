@@ -57,16 +57,9 @@ class DataArguments:
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
-    cache_dir: Optional[str] = field(default=None)
     optim: str = field(default="adamw_torch")
-    model_max_length: int = field(
+    max_seq_length: int = field(
         default=512,
-        metadata={
-            "help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."
-        },
-    )
-    source_model_max_length: int = field(
-        default=0,
         metadata={
             "help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."
         },

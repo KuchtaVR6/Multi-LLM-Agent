@@ -53,7 +53,7 @@ python train_mine.py \\
     --lr_scheduler_type "cosine" \\
     --gradient_checkpointing True \\
     --logging_steps 2 \\
-    --model_max_length ${CONTEXT_LENGTH} \\
+    --max_seq_length ${CONTEXT_LENGTH} \\
     --report_to none \\
     --lazy_preprocess False \\
     --bf16 True \\
