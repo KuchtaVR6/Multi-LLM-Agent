@@ -33,13 +33,6 @@ from train import (
     make_supervised_data_module,
 )
 
-from utils.llama_flash_attn_monkey_patch import (
-    replace_llama_attn_with_flash_attn,
-)
-
-
-# replace_llama_attn_with_flash_attn()
-
 
 @dataclass
 class LoraArguments:
@@ -100,22 +93,21 @@ def train():
         )
         model = get_peft_model(model, lora_config)
 
-    if training_args.gradient_checkpointing:
-        logging.warning(
-            "gradient checkpointing with lora makes requires_grad "
-            "incorrect and needs a monkey patch in Trainer or the "
-            "wrapped model's forward. ref: "
-            "https://github.com/lm-sys/FastChat/pull/138#issuecomment-1509172198"
-        )
-        model.enable_input_require_grads()
+    # if training_args.gradient_checkpointing: # TODO REVERT
+    #     logging.warning(
+    #         "gradient checkpointing with lora makes requires_grad "
+    #         "incorrect and needs a monkey patch in Trainer or the "
+    #         "wrapped model's forward. ref: "
+    #         "https://github.com/lm-sys/FastChat/pull/138#issuecomment-1509172198"
+    #     )
+    #     model.enable_input_require_grads()
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,
         padding_side="right",
-        bf16=True,
-        **model_kwargs
+        bf16=True
     )
 
 
@@ -123,7 +115,7 @@ def train():
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     trainer = Trainer( # TODO REVERT TO SFTTrainer
-        model=model, tokenizer=tokenizer, args=training_args, **data_module
+        model=model, args=training_args, **data_module
     )
 
     model.config.use_cache = False
@@ -137,6 +129,7 @@ def train():
 
     if lora_args.lora:
         model = model.merge_and_unload()
+
     model.save_pretrained(training_args.output_dir)
     tokenizer.save_pretrained(training_args.output_dir)
 

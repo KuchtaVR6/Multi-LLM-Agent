@@ -73,14 +73,6 @@ class TrainingArguments(transformers.TrainingArguments):
     )
 
 
-local_rank = None
-
-
-def rank0_print(*args):
-    if local_rank == 0 or local_rank is None:
-        print(*args)
-
-
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer, output_dir: str):
     """Collects the state dict and dump to disk."""
     state_dict = trainer.model.state_dict()
@@ -139,7 +131,7 @@ class SupervisedDataset(Dataset):
     def __init__(self, raw_data,tokenizer: transformers.PreTrainedTokenizer):
         super(SupervisedDataset, self).__init__()
 
-        rank0_print("Formatting inputs...")
+        print("Formatting inputs...")
         sources = [example for example in raw_data]
         data_dict = preprocess(sources, tokenizer)
 
@@ -160,7 +152,7 @@ class LazySupervisedDataset(Dataset):
 
     def __init__(self, raw_data, tokenizer: transformers.PreTrainedTokenizer):
         super(LazySupervisedDataset, self).__init__()
-        rank0_print("Formatting inputs...Skip in lazy mode")
+        print("Formatting inputs...Skip in lazy mode")
         self.tokenizer = tokenizer
         self.raw_data = raw_data
         self.cached_data_dict = {}
@@ -196,7 +188,7 @@ def nested_load_data(data_path, max_num_sample, max_num_sample_ratio):
             dev_raw_data += temp_dev
         return train_raw_data, dev_raw_data
     elif os.path.isfile(data_path) and data_path.endswith('.json'):
-        rank0_print("Load data from",data_path)
+        print("Load data from",data_path)
         temp_data =  json.load(open(data_path, "r"))
         random.shuffle(temp_data)
         if max_num_sample != 0:
@@ -217,7 +209,6 @@ def make_supervised_data_module(
     dataset_cls = (
         LazySupervisedDataset if data_args.lazy_preprocess else SupervisedDataset
     )
-    rank0_print("Loading data...")
     data_paths = data_args.data_path.split(',')
     train_raw_data = []
     eval_raw_data = []
@@ -226,8 +217,6 @@ def make_supervised_data_module(
         train_raw_data += train_temp
         eval_raw_data += dev_temp
 
-
-    rank0_print(f"#train {len(train_raw_data)}, #eval {len(eval_raw_data)}")
     # prompt_temp = prompt_dict["v7_" + data_args.prompt_type]
     # gorilla_prompt_temp = prompt_dict["v7_gorilla_" + data_args.prompt_type]
     
