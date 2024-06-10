@@ -21,6 +21,7 @@ import typing
 
 import torch
 from peft import LoraConfig, get_peft_model
+from trl import SFTTrainer, SFTConfig
 import transformers
 from transformers import Trainer, BitsAndBytesConfig
 from transformers.utils import is_bitsandbytes_available, is_flash_attn_2_available
@@ -87,7 +88,6 @@ def train():
 
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
-        cache_dir=training_args.cache_dir,
         **model_kwargs
     )
 
@@ -114,8 +114,13 @@ def train():
     tokenizer.pad_token = tokenizer.unk_token
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
-    trainer = Trainer(
-        model=model, tokenizer=tokenizer, args=training_args, **data_module
+    if lora_args.lora:
+        data_module.update({'peft_config': lora_config})
+    trainer = SFTTrainer(
+        model=model,
+        tokenizer=tokenizer,
+        args=training_args,
+        **data_module
     )
 
     model.config.use_cache = False
