@@ -54,8 +54,6 @@ class LoraArguments:
 
 
 def train():
-    torch.cuda.memory._record_memory_history()
-
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments, LoraArguments)
     )
@@ -66,10 +64,31 @@ def train():
         lora_args,
     ) = parser.parse_args_into_dataclasses()
 
+    # if is_bitsandbytes_available():
+    #     print("Using quantisation ..")
+    #     bnb_config = BitsAndBytesConfig(load_in_4bit=True,
+    #                                     bnb_4bit_quant_type="nf4",
+    #                                     bnb_4bit_compute_dtype=torch.bfloat16)
+    #     model_kwargs = {'quantization_config': bnb_config}
+    # else:
+    model_kwargs = {'torch_dtype': torch.bfloat16}
+
+    if is_flash_attn_2_available():
+        print("Using flash attention ..")
+        model_kwargs.update({"attn_implementation": "flash_attention_2"})
+
+    tokenizer = transformers.AutoTokenizer.from_pretrained(
+        model_args.model_name_or_path,
+        cache_dir=training_args.cache_dir,
+        model_max_length=training_args.model_max_length,
+        padding_side="right",
+        bf16=True
+    )
+
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
-        torch_dtype=torch.bfloat16
+        **model_kwargs
     )
 
     if lora_args.lora:
@@ -91,29 +110,6 @@ def train():
             "https://github.com/lm-sys/FastChat/pull/138#issuecomment-1509172198"
         )
         model.enable_input_require_grads()
-    #
-    # if is_bitsandbytes_available():
-    #     print("Using quantisation ..")
-    #     bnb_config = BitsAndBytesConfig(load_in_4bit=True,
-    #                                     bnb_4bit_quant_type="nf4",
-    #                                     bnb_4bit_compute_dtype=torch.bfloat16)
-    #     model_kwargs = {'quantization_config': bnb_config}
-    # else:
-    #     model_kwargs = {'torch_dtype': torch.bfloat16} TODO REVERT
-    model_kwargs = {'torch_dtype': torch.bfloat16}
-
-    if is_flash_attn_2_available():
-        print("Using flash attention ..")
-        model_kwargs.update({"attn_implementation": "flash_attention_2"})
-
-    tokenizer = transformers.AutoTokenizer.from_pretrained(
-        model_args.model_name_or_path,
-        cache_dir=training_args.cache_dir,
-        model_max_length=training_args.model_max_length,
-        padding_side="right",
-        bf16=True
-    )
-
 
     tokenizer.pad_token = tokenizer.unk_token
 
@@ -131,12 +127,8 @@ def train():
 
     trainer.save_state()
 
-    if lora_args.lora:
-        model = model.merge_and_unload()
     model.save_pretrained(training_args.output_dir)
     tokenizer.save_pretrained(training_args.output_dir)
-
-    torch.cuda.memory._dump_snapshot("memory.pickle")
 
 
 if __name__ == "__main__":
