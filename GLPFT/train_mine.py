@@ -80,8 +80,7 @@ def train():
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
-        cache_dir=training_args.cache_dir,
-        model_max_length=training_args.model_max_length,
+        model_max_length=training_args.max_seq_length,
         padding_side="right",
         bf16=True
     )
