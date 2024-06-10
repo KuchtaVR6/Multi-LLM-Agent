@@ -116,6 +116,9 @@ def train():
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     if lora_args.lora:
         data_module.update({'peft_config': lora_config})
+
+    training_args.bf16 = True
+
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
