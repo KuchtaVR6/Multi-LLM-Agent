@@ -130,8 +130,6 @@ def train():
 
     trainer.save_state()
 
-    if lora_args.lora:
-        model = model.merge_and_unload()
     model.save_pretrained(training_args.output_dir)
     tokenizer.save_pretrained(training_args.output_dir)
 
