@@ -60,26 +60,25 @@ def train():
         lora_args,
     ) = parser.parse_args_into_dataclasses()
 
-    if False:  # TODO REVERT is_bitsandbytes_available():
-        print("Using quantisation ..")
-        bnb_config = BitsAndBytesConfig(load_in_4bit=True,
-                                        bnb_4bit_quant_type="nf4",
-                                        bnb_4bit_compute_dtype=torch.bfloat16)
-        model_kwargs = {'quantization_config': bnb_config}
-    else:
-        model_kwargs = {'torch_dtype': torch.bfloat16}
-
-    if is_flash_attn_2_available():
-        print("Using flash attention ..")
-        model_kwargs.update({"attn_implementation": "flash_attention_2"})
+    # if False:  # TODO REVERT is_bitsandbytes_available():
+    #     print("Using quantisation ..")
+    #     bnb_config = BitsAndBytesConfig(load_in_4bit=True,
+    #                                     bnb_4bit_quant_type="nf4",
+    #                                     bnb_4bit_compute_dtype=torch.bfloat16)
+    #     model_kwargs = {'quantization_config': bnb_config}
+    # else:
+    #     model_kwargs = {'torch_dtype': torch.bfloat16}
+    #
+    # if is_flash_attn_2_available():
+    #     print("Using flash attention ..")
+    #     model_kwargs.update({"attn_implementation": "flash_attention_2"})  # TODO REVERT OVERTIME
 
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
         device_map="auto",
         low_cpu_mem_usage=True,
-        trust_remote_code=True,
-        **model_kwargs
+        trust_remote_code=True
     )
 
     if lora_args.lora:
