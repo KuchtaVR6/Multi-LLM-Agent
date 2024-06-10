@@ -91,15 +91,16 @@ def train():
             "https://github.com/lm-sys/FastChat/pull/138#issuecomment-1509172198"
         )
         model.enable_input_require_grads()
-
-    if is_bitsandbytes_available():
-        print("Using quantisation ..")
-        bnb_config = BitsAndBytesConfig(load_in_4bit=True,
-                                        bnb_4bit_quant_type="nf4",
-                                        bnb_4bit_compute_dtype=torch.bfloat16)
-        model_kwargs = {'quantization_config': bnb_config}
-    else:
-        model_kwargs = {'torch_dtype': torch.bfloat16}
+    #
+    # if is_bitsandbytes_available():
+    #     print("Using quantisation ..")
+    #     bnb_config = BitsAndBytesConfig(load_in_4bit=True,
+    #                                     bnb_4bit_quant_type="nf4",
+    #                                     bnb_4bit_compute_dtype=torch.bfloat16)
+    #     model_kwargs = {'quantization_config': bnb_config}
+    # else:
+    #     model_kwargs = {'torch_dtype': torch.bfloat16} TODO REVERT
+    model_kwargs = {'torch_dtype': torch.bfloat16}
 
     if is_flash_attn_2_available():
         print("Using flash attention ..")
@@ -118,7 +119,7 @@ def train():
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     trainer = Trainer(
-        model=model, tokenizer=tokenizer, args=training_args, **data_module, **model_kwargs
+        model=model, tokenizer=tokenizer, args=training_args, **data_module
     )
 
     model.config.use_cache = False
