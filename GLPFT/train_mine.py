@@ -110,12 +110,9 @@ def train():
         bf16=True
     )
 
-
-    tokenizer.pad_token = tokenizer.unk_token
-
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     trainer = Trainer( # TODO REVERT TO SFTTrainer
-        model=model, args=training_args, **data_module
+        model=model, tokenizer=tokenizer, args=training_args, **data_module
     )
 
     model.config.use_cache = False
