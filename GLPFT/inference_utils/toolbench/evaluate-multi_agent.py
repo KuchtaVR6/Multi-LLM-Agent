@@ -152,6 +152,12 @@ for d in data:
     ref_plan, ref_action, ref_input, ref_ans = parse_output(reference)
     pred_plan, pred_action, pred_input, pred_ans = parse_output(prediction)
 
+    print('='*20)
+    print(ref_plan, ref_action, ref_input, ref_ans)
+    print('-' * 20)
+    print(pred_plan, pred_action, pred_input, pred_ans)
+    print('=' * 20)
+
     if pred_action is not None and pred_action != 'none' and pred_action not in [t['Name'] for t in d['tools']]:
         hallu_pred += 1
         hallu_cases.append(d)
