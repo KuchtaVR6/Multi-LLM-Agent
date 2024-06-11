@@ -20,6 +20,9 @@ fi
 
 CONTEXT_LENGTH=4096
 
+# Calculate the number of training samples and epochs
+DATA_PATH="dataset/toolbench/train_separated/certain/${API_NAME}.json"
+
 # Determine the input model based on the third parameter
 if [[ $MODEL == "dev" ]]; then
     INPUT_MODEL="EleutherAI/pythia-160m"
@@ -27,6 +30,7 @@ if [[ $MODEL == "dev" ]]; then
     TARGET_MODULES="query_key_value"
 elif [[ $MODEL == "backbone" ]]; then
     INPUT_MODEL="iic/alpha-umi-backbone-7b"
+    DATA_PATH="dataset/toolbench/train_separated/certain_backbone_based/${API_NAME}.json"
 elif [[ $MODEL == "caller" ]]; then
     INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
 else
@@ -34,8 +38,6 @@ else
     exit 1
 fi
 
-# Calculate the number of training samples and epochs
-DATA_PATH="dataset/toolbench/train_separated/certain/${API_NAME}.json"
 NUM_SAMPLES=$(python3 -c "
 import json
 with open('${DATA_PATH}', 'r') as f:
