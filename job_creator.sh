@@ -35,6 +35,8 @@ echo "" >> "$job_script"
 echo "# Activate the conda environment for CUDA" >> "$job_script"
 echo "source /exports/csce/eddie/inf/groups/dawg/miniconda3/bin/activate base" >> "$job_script"
 
+echo "cd /exports/eddie/scratch/s2595201/Multi-LLM-Agent"
+
 echo "conda activate lean_env" >> "$job_script"
 echo "" >> "$job_script"
 
@@ -56,3 +58,7 @@ echo "" >> "$job_script"
 echo "# Deactivate the conda environment" >> "$job_script"
 echo "conda deactivate" >> "$job_script"
 
+# Make the generated script executable
+chmod +x "$job_script"
+
+echo "Script ${job_script} has been created and made executable."
