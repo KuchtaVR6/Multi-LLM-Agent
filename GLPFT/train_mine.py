@@ -65,14 +65,14 @@ def train():
         lora_args,
     ) = parser.parse_args_into_dataclasses()
 
-    # if is_bitsandbytes_available():
-    #     print("Using quantisation ..")
-    #     bnb_config = BitsAndBytesConfig(load_in_4bit=True,
-    #                                     bnb_4bit_quant_type="nf4",
-    #                                     bnb_4bit_compute_dtype=torch.bfloat16)
-    #     model_kwargs = {'quantization_config': bnb_config}
-    # else:
-    model_kwargs = {'torch_dtype': torch.bfloat16}
+    if is_bitsandbytes_available():
+        print("Using quantisation ..")
+        bnb_config = BitsAndBytesConfig(load_in_4bit=True,
+                                        bnb_4bit_quant_type="nf4",
+                                        bnb_4bit_compute_dtype=torch.bfloat16)
+        model_kwargs = {'quantization_config': bnb_config}
+    else:
+        model_kwargs = {'torch_dtype': torch.bfloat16}
 
     if is_flash_attn_2_available():
         print("Using flash attention ..")
@@ -82,11 +82,13 @@ def train():
         model_args.model_name_or_path,
         model_max_length=training_args.max_seq_length,
         padding_side="right",
-        bf16=True
     )
 
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
+        device_map="auto",
+        low_cpu_mem_usage=True,
+        trust_remote_code=True,
         **model_kwargs
     )
 
