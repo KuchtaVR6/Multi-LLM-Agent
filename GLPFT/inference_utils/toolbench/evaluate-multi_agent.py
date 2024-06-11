@@ -305,3 +305,25 @@ display_counts(count_unique_strings(reasoning_stats))
 print('---')
 sort_and_display_dict(action_em_per_ref, skip_zeros=True)
 print('---')
+
+print('F1 INFORMATION')
+print('name,em,f1,hard_f1,easy_f1,adj_f1,adj_hard_f1,adj_easy_f1')
+for ref in f1_dict.keys():
+    f1_data = f1_dict[ref]
+    hard_f1_data = hard_f1_dict[ref]
+    easy_f1_data = easy_f1_dict[ref]
+
+    f1 = sum(f1_data) / (len(f1_data) + 1e-30)
+    hard_f1 = sum(hard_f1_data) / (len(hard_f1_data) + 1e-30)
+    easy_f1 = sum(easy_f1_data) / (len(easy_f1_data) + 1e-30)
+
+    if ref in action_em_per_ref:
+        em = action_em_per_ref[ref]
+    else:
+        em = 1
+
+    if em == 0 or em == 1 or f1 + hard_f1 + easy_f1 == 0:
+        continue
+
+    print(f'{ref},{em:.2f},{f1:.2f},{hard_f1:.2f},{easy_f1:.2f},'
+          f'{f1/em:.2f},{hard_f1/em:.2f},{easy_f1/em:.2f}')
