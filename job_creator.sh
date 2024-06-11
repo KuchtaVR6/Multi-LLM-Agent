@@ -35,7 +35,7 @@ echo "" >> "$job_script"
 echo "# Activate the conda environment for CUDA" >> "$job_script"
 echo "source /exports/csce/eddie/inf/groups/dawg/miniconda3/bin/activate base" >> "$job_script"
 
-echo "cd /exports/eddie/scratch/s2595201/Multi-LLM-Agent"
+echo "cd /exports/eddie/scratch/s2595201/Multi-LLM-Agent" >> "$job_script"
 
 echo "conda activate lean_env" >> "$job_script"
 echo "" >> "$job_script"
