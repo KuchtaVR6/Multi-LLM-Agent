@@ -42,9 +42,9 @@ def evaluate_action_em(cand_list: list, ref_list: list):
 
 
 def evaluate_action_input_f1(action_pred:list, action_ref: list, cand_list: list, ref_list: list):
-    easy_f1 = []
-    hard_f1 = []
-    f1 = []
+    easy_f1 = defaultdict(list)
+    hard_f1 = defaultdict(list)
+    f1 = defaultdict(list)
     for i in range(len(action_pred)):
         ref_action=action_ref[i]
         pred_action=action_pred[i]
@@ -53,9 +53,9 @@ def evaluate_action_input_f1(action_pred:list, action_ref: list, cand_list: list
         cand_input = cand_list[i]
 
         if ref_action != pred_action:
-            easy_f1.append(0)
-            hard_f1.append(0)
-            f1.append(0)
+            easy_f1[ref_action].append(0)
+            hard_f1[ref_action].append(0)
+            f1[ref_action].append(0)
         else:
             try:
                 ref_input_json = json.loads(ref_input)
@@ -65,11 +65,11 @@ def evaluate_action_input_f1(action_pred:list, action_ref: list, cand_list: list
                     full_match = 0
                     if ref_input_json == {}:
                         if cand_input_json == {}:
-                            easy_f1.append(1)
-                            f1.append(1)
+                            easy_f1[ref_action].append(1)
+                            f1[ref_action].append(1)
                         else:
-                            easy_f1.append(0)
-                            f1.append(0)
+                            easy_f1[ref_action].append(0)
+                            f1[ref_action].append(0)
                     else:
                         for k,v in ref_input_json.items():
                             if k in cand_input_json.keys():
@@ -80,24 +80,24 @@ def evaluate_action_input_f1(action_pred:list, action_ref: list, cand_list: list
 
                         recall = (0.5 * half_match + full_match) / (len(ref_input_json) + 1e-30)
                         precision = (0.5 * half_match + full_match) / (len(cand_input_json) + 1e-30)
-                        hard_f1.append( (2 * recall * precision)/(recall + precision))
-                        f1.append( (2 * recall * precision)/(recall + precision))
+                        hard_f1[ref_action].append( (2 * recall * precision)/(recall + precision))
+                        f1[ref_action].append( (2 * recall * precision)/(recall + precision))
                 except:
                     # cand_input = cand_input.replace("\n","").replace("\"","")
                     # ref_input = cand_input.replace("\n","").replace("\"","")
                     # rouge = Rouge()
                     # rouge_score = rouge.get_scores(hyps=[cand_input], refs=[ref_input], avg=True)
                     if ref_input_json == {}:
-                        easy_f1.append(0)
+                        easy_f1[ref_action].append(0)
                     else:
-                        hard_f1.append(0)
+                        hard_f1[ref_action].append(0)
                     # hard_f1.append(rouge_score["rouge-l"]["f"])
                     # f1.append(rouge_score["rouge-l"]["f"])
-                    f1.append(0)
+                    f1[ref_action].append(0)
             except:
                 pass
 
-    return sum(easy_f1) / len(easy_f1)+1e-30, sum(hard_f1) / len(hard_f1)+1e-30, sum(f1) / len(f1)+1e-30
+    return easy_f1, hard_f1, f1
 
 
 with open(args.input_path, encoding='utf-8') as f:
@@ -247,7 +247,15 @@ rouge = evaluate_rougel(answer_pred, answer_ref)
 plan_em = evaluate_action_em(plan_ref, plan_pred)
 
 action_em, action_em_per_ref = evaluate_action_em(action_ref, action_pred)
-easy_f1, hard_f1, f1 = evaluate_action_input_f1(action_pred, action_ref, action_input_pred, action_input_ref)
+easy_f1_dict, hard_f1_dict, f1_dict = evaluate_action_input_f1(action_pred, action_ref, action_input_pred, action_input_ref)
+
+easy_f1_list = [item for sublist in easy_f1_dict.values() for item in sublist]
+hard_f1_list = [item for sublist in hard_f1_dict.values() for item in sublist]
+f1_list = [item for sublist in f1_dict.values() for item in sublist]
+
+easy_f1 = sum(easy_f1_list) / len(easy_f1_list)+1e-30
+hard_f1 = sum(hard_f1_list) / len(hard_f1_list)+1e-30
+f1 = sum(f1_list) / len(f1_list)+1e-30
 
 hallu_rate = hallu_pred / len(data)
 metric['rouge'] = rouge
@@ -282,14 +290,17 @@ def display_counts(count_dict):
         sort_and_display_dict(counts)
         print()  # Blank line for better readability
 
-def sort_and_display_dict(input_dict):
+def sort_and_display_dict(input_dict, skip_zeros=False):
     sorted_counts = sorted(input_dict.items(), key=lambda item: item[1], reverse=True)
     for item, count in sorted_counts:
+        if count == 0 and skip_zeros:
+            break  # because its sorted (continue would work too)
         print(f"  {item}: {count}")
+    print('WARN - All zero values skipped')
 
 display_counts(count_unique_strings(caller_stats))
 print('---')
 display_counts(count_unique_strings(reasoning_stats))
 print('---')
-sort_and_display_dict(action_em_per_ref)
+sort_and_display_dict(action_em_per_ref, skip_zeros=True)
 print('---')
