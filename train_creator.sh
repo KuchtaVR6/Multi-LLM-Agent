@@ -4,14 +4,9 @@
 TARGET=$1
 MODEL=$2
 USE_LORA=$3
-BSZ=${4:-2}  # Default value of BSZ is 2 if not provided
+BSZ=${4:-4}  # Default value of BSZ is 2 if not provided
 
-# Calculate GA based on BSZ and USE_LORA
-if [[ $USE_LORA == true ]]; then
-    GA=$((32 / BSZ))  # Ensure BSZ * GA = 32 when using LoRA
-else
-    GA=$((8 / BSZ))   # Ensure BSZ * GA = 8 when not using LoRA
-fi
+GA=$((8 / BSZ))   # Ensure BSZ * GA = 8 when not using LoRA
 
 CONTEXT_LENGTH=4096
 
