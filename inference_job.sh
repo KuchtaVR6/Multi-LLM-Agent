@@ -16,9 +16,6 @@ export NNODE=2 # num of GPUs
 # Load the CUDA module
 module load cuda
 
-# point hugging_face to the right place
-export TRANSFORMERS_CACHE=/exports/eddie/scratch/s2595201/hugging_face_cache
-
 # Activate the conda environment for CUDA
 source ../miniconda3/bin/activate base
 conda activate umi_vanilla
