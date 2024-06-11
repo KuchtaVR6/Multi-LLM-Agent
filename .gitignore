@@ -3,6 +3,7 @@
 
 /.idea
 /job_inner.sh
+/*_api.sh
 
 *.pickle
 /GLPFT/dataset/**
