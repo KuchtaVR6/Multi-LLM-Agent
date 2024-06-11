@@ -26,9 +26,9 @@ if [[ $MODEL == "dev" ]]; then
     CONTEXT_LENGTH=2048
     TARGET_MODULES="query_key_value"
 elif [[ $MODEL == "backbone" ]]; then
-    INPUT_MODEL="iic/alpha-umi-backbone-7b"
+    INPUT_MODEL="saved_models/toolbench/backbone"
 elif [[ $MODEL == "caller" ]]; then
-    INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
+    INPUT_MODEL="saved_models/toolbench/caller"
 else
     echo "Invalid model type. Please choose from {dev, backbone, caller}."
     exit 1
