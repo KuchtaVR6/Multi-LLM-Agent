@@ -5,8 +5,8 @@
 # 3rd arg - conda env suffix (optional)
 
 # Define the job script file name based on the first argument
-job_script="${1}_job.sh"
-inner_script="../jobs/${1}_api.sh"
+job_script="../jobs/${1}_job.sh"
+inner_script="${1}_api.sh"
 
 # clear file contents
 > "$job_script"
