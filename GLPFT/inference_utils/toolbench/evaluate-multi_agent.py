@@ -1,6 +1,8 @@
 import json
 import argparse
 import re
+
+import numpy as np
 from rouge import Rouge
 import os
 from collections import defaultdict, Counter
@@ -25,9 +27,17 @@ def evaluate_action_em(cand_list: list, ref_list: list):
     if len(ref_list) == 0:
         return 0
     em = 0
+    em_per_ref = defaultdict(list)
     for cand, ref in zip(cand_list, ref_list):
-        em += (1 if cand == ref else 0)
-    return em/len(cand_list)
+        em_val = (1 if cand == ref else 0)
+        em += em_val
+        em_per_ref[ref].append(em_val)
+
+    em_final = {}
+    for ref, ems in em_per_ref.items():
+        em_final[ref] = np.average(ems)
+
+    return em/len(cand_list), em_final
 
 
 
@@ -235,8 +245,10 @@ for d in data:
 metric = {}
 rouge = evaluate_rougel(answer_pred, answer_ref)
 plan_em = evaluate_action_em(plan_ref, plan_pred)
-action_em = evaluate_action_em(action_ref, action_pred)
+
+action_em, action_em_per_ref = evaluate_action_em(action_ref, action_pred)
 easy_f1, hard_f1, f1 = evaluate_action_input_f1(action_pred, action_ref, action_input_pred, action_input_ref)
+
 hallu_rate = hallu_pred / len(data)
 metric['rouge'] = rouge
 metric['plan_em'] = plan_em
@@ -267,11 +279,17 @@ def display_counts(count_dict):
     for key, counts in count_dict.items():
         total_count = sum(counts.values())
         print(f"Category: {key} (Total: {total_count})")
-        sorted_counts = sorted(counts.items(), key=lambda item: item[1], reverse=True)
-        for item, count in sorted_counts:
-            print(f"  {item}: {count}")
+        sort_and_display_dict(counts)
         print()  # Blank line for better readability
+
+def sort_and_display_dict(input_dict):
+    sorted_counts = sorted(input_dict.items(), key=lambda item: item[1], reverse=True)
+    for item, count in sorted_counts:
+        print(f"  {item}: {count}")
 
 display_counts(count_unique_strings(caller_stats))
 print('---')
 display_counts(count_unique_strings(reasoning_stats))
+print('---')
+sort_and_display_dict(action_em_per_ref)
+print('---')
