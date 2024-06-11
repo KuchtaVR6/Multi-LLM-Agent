@@ -49,7 +49,7 @@ echo "" >> "$job_script"
 echo "export TRANSFORMERS_CACHE=/exports/csce/eddie/inf/groups/dawg/HuggingFaceCache" >> "$job_script"
 echo "" >> "$job_script"
 
-echo "huggingface-cli login --token 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 --add-to-git-credential" >> "$job_script"
+echo "huggingface-cli login --token $HF_TOKEN --add-to-git-credential" >> "$job_script"
 echo "" >> "$job_script"
 
 cat "$inner_script" >> "$job_script"
