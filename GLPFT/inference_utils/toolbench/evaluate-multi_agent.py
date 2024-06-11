@@ -95,11 +95,16 @@ with open(args.input_path, encoding='utf-8') as f:
 
 
 def parse_output(text):
-    prev_reasoning = None
-
-    if text.startswith('asssitant: ') and 'Next: ' in text:
+    end_of_reasoning = len(text)
+    if 'Next: ' in text:
         end_of_reasoning = text.rindex('Next: ')
-        prev_reasoning = text[11:end_of_reasoning]
+    start_of_reasoning = 0
+    starters = ['asssitant: ', 'assistant: ']
+    for starter in starters:
+        if text.startswith(starter):
+            start_of_reasoning = len(starter)
+
+    prev_reasoning = text[start_of_reasoning:end_of_reasoning]
 
     if 'Next: give up' in text:
         return "give up", None, None, None, prev_reasoning
@@ -135,7 +140,29 @@ def parse_output(text):
         answer = None
         return plan, action, action_input, answer, prev_reasoning
 
+def evaluate_reasoning(reasoning, expected_api, apis):
+    number_of_apis_mentioned = 0
+    for api in apis:
+        if api in reasoning:
+            number_of_apis_mentioned += 1
 
+    if expected_api:
+        correct_api_mentioned = expected_api in reasoning
+        if correct_api_mentioned:
+            if number_of_apis_mentioned == 1:
+                return 'correct'
+            else:
+                return 'ambiguous'
+        else:
+            if number_of_apis_mentioned == 0:
+                return 'no_apis'
+            else:
+                return 'wrong_apis'
+    else:
+        if number_of_apis_mentioned == 0:
+            return 'partially_correct_no_mention'
+        else:
+            return 'apis_present_but_not_expected'
 
 plan_ref = []
 plan_pred = []
@@ -154,10 +181,12 @@ for d in data:
     reference = d['reference']
     prediction = d['predictions']
 
+    tools_available = [t['Name'] for t in d['tools']]
+
     ref_plan, ref_action, ref_input, ref_ans, ref_reason = parse_output(reference)
     pred_plan, pred_action, pred_input, pred_ans, pred_reason = parse_output(prediction)
 
-    if pred_action is not None and pred_action != 'none' and pred_action not in [t['Name'] for t in d['tools']]:
+    if pred_action is not None and pred_action != 'none' and pred_action not in tools_available:
         hallu_pred += 1
         hallu_cases.append(d)
     plan_ref.append(ref_plan)
@@ -184,6 +213,14 @@ for d in data:
             else:
                 print('🤪 Called something else')
 
+            print('-'*20)
+
+            print('ref valid?', evaluate_reasoning(ref_reason, ref_action, tools_available))
+            print('pred res valid?', evaluate_reasoning(pred_reason, ref_action, tools_available))
+            print('pred reasonable action?', evaluate_reasoning(pred_reason, pred_action, tools_available))
+
+            print('-'*20)
+            print(ref_reason)
             print('-'*20)
             print(pred_reason)
 
