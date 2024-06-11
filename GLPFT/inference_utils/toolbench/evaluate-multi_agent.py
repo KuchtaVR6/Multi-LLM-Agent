@@ -265,10 +265,13 @@ def count_unique_strings(data_dict):
 
 def display_counts(count_dict):
     for key, counts in count_dict.items():
-        print(f"Category: {key}")
-        for item, count in counts.items():
+        total_count = sum(counts.values())
+        print(f"Category: {key} (Total: {total_count})")
+        sorted_counts = sorted(counts.items(), key=lambda item: item[1], reverse=True)
+        for item, count in sorted_counts:
             print(f"  {item}: {count}")
         print()  # Blank line for better readability
 
 display_counts(count_unique_strings(caller_stats))
+print('---')
 display_counts(count_unique_strings(reasoning_stats))
