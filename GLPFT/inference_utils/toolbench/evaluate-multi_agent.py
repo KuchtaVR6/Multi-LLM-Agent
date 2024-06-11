@@ -3,6 +3,7 @@ import argparse
 import re
 from rouge import Rouge
 import os
+from collections import defaultdict, Counter
 
 
 parser = argparse.ArgumentParser()
@@ -177,6 +178,10 @@ answer_pred = []
 action_pred = []
 action_input_pred = []
 hallu_pred = 0
+
+caller_stats = defaultdict(list)
+reasoning_stats = defaultdict(list)
+
 for d in data:
     reference = d['reference']
     prediction = d['predictions']
@@ -200,29 +205,20 @@ for d in data:
         else:
             answer_pred.append(pred_ans)
     else:
-        print('='*20)
-        print(ref_action, 'vs', pred_action)
-        print('-'*20)
+        caller_stats['instances'].append(ref_action)
         if ref_action == pred_action:
-            print('✅ Called Followed expectation')
+            caller_stats['correct_action'].append(ref_action)
         else:
             if not pred_action:
-                print('🦥 Was expected to called, and didnot')
+                caller_stats['no_action_against_expectation'].append(ref_action)
             elif not ref_action:
-                print('🏃 Was expected not to call, and did')
+                caller_stats['action_against_expectation_of_none'].append(ref_action)
             else:
-                print('🤪 Called something else')
+                caller_stats['wrong_action'].append(ref_action)
 
-            print('-'*20)
-
-            print('ref valid?', evaluate_reasoning(ref_reason, ref_action, tools_available))
-            print('pred res valid?', evaluate_reasoning(pred_reason, ref_action, tools_available))
-            print('pred reasonable action?', evaluate_reasoning(pred_reason, pred_action, tools_available))
-
-            print('-'*20)
-            print(ref_reason)
-            print('-'*20)
-            print(pred_reason)
+            reasoning_stats['ref valid?'].append(evaluate_reasoning(ref_reason, ref_action, tools_available))
+            reasoning_stats['pred res valid?'].append(evaluate_reasoning(pred_reason, ref_action, tools_available))
+            reasoning_stats['pred reasonable action?'].append(evaluate_reasoning(pred_reason, pred_action, tools_available))
 
         action_ref.append(ref_action)
         action_input_ref.append(ref_input)
@@ -259,3 +255,20 @@ with open(args.output_path, 'w', encoding='utf-8') as f:
 
 with open(args.output_path.replace('metrics.json', 'hallu_cases.json'), 'w', encoding='utf-8') as f:
     json.dump(hallu_cases,f, indent=2)
+
+
+def count_unique_strings(data_dict):
+    result = defaultdict(Counter)
+    for key, string_list in data_dict.items():
+        result[key] = Counter(string_list)
+    return result
+
+def display_counts(count_dict):
+    for key, counts in count_dict.items():
+        print(f"Category: {key}")
+        for item, count in counts.items():
+            print(f"  {item}: {count}")
+        print()  # Blank line for better readability
+
+display_counts(count_unique_strings(caller_stats))
+display_counts(count_unique_strings(reasoning_stats))
