@@ -21,7 +21,6 @@ def evaluate_rougel(cand_list: list, ref_list: list):
     return rougel
 
 def evaluate_action_em(cand_list: list, ref_list: list):
-    print(cand_list, ref_list)
     if len(ref_list) == 0:
         return 0
     em = 0
@@ -96,9 +95,14 @@ with open(args.input_path, encoding='utf-8') as f:
 
 
 def parse_output(text):
+    prev_reasoning = None
+
+    if text.startswith('asssitant: ') and 'Next: ' in text:
+        end_of_reasoning = text.rindex('Next: ')
+        prev_reasoning = text[11:end_of_reasoning]
+
     if 'Next: give up' in text:
-        return "give up", None, None, None
-    
+        return "give up", None, None, None, prev_reasoning
     elif 'Next: conclusion' in text:
         # finish
         plan = 'finish'
@@ -110,7 +114,7 @@ def parse_output(text):
         else:
             answer = text
         answer = answer.replace('</s>',"")
-        return plan, action, action_input, answer
+        return plan, action, action_input, answer, prev_reasoning
     else :
         plan='call'
         text = text.split('</s>')[1]
@@ -129,7 +133,7 @@ def parse_output(text):
         else:
             action = 'none'
         answer = None
-        return plan,action, action_input, answer
+        return plan, action, action_input, answer, prev_reasoning
 
 
 
@@ -149,14 +153,9 @@ hallu_pred = 0
 for d in data:
     reference = d['reference']
     prediction = d['predictions']
-    ref_plan, ref_action, ref_input, ref_ans = parse_output(reference)
-    pred_plan, pred_action, pred_input, pred_ans = parse_output(prediction)
 
-    print('='*20)
-    print(ref_plan, ref_action, ref_input, ref_ans)
-    print('-' * 20)
-    print(pred_plan, pred_action, pred_input, pred_ans)
-    print('=' * 20)
+    ref_plan, ref_action, ref_input, ref_ans, ref_reason = parse_output(reference)
+    pred_plan, pred_action, pred_input, pred_ans, pred_reason = parse_output(prediction)
 
     if pred_action is not None and pred_action != 'none' and pred_action not in [t['Name'] for t in d['tools']]:
         hallu_pred += 1
@@ -172,6 +171,22 @@ for d in data:
         else:
             answer_pred.append(pred_ans)
     else:
+        print('='*20)
+        print(ref_action, 'vs', pred_action)
+        print('-'*20)
+        if ref_action == pred_action:
+            print('✅ Called Followed expectation')
+        else:
+            if not pred_action:
+                print('🦥 Was expected to called, and didnot')
+            elif not ref_action:
+                print('🏃 Was expected not to call, and did')
+            else:
+                print('🤪 Called something else')
+
+            print('-'*20)
+            print(pred_reason)
+
         action_ref.append(ref_action)
         action_input_ref.append(ref_input)
         if pred_action is None:
