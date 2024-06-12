@@ -53,9 +53,9 @@ cd GLPFT
 INPUT_MODEL="${INPUT_MODEL}"
 
 python train_mine.py \\
-    --model_name_or_path \$INPUT_MODEL \\
+    --model_name_or_path ${INPUT_MODEL} \\
     --data_path ${DATA_PATH} \\
-    --output_dir \$EXP_NAME \\
+    --output_dir ${EXP_NAME} \\
     --num_train_epochs ${EPOCHS} \\
     --per_device_train_batch_size ${BSZ} \\
     --per_device_eval_batch_size ${BSZ} \\
