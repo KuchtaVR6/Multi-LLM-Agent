@@ -20,8 +20,6 @@ else
   DATA_PATH="dataset/toolbench/train_per_api/${API_NAME}.json"
 fi
 
-
-DATA_PATH="dataset/toolbench/train_separated/certain/${API_NAME}.json"
 EXP_NAME=output_pathes/${API_NAME}/
 
 # Determine the input model based on the third parameter
