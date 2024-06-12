@@ -5,7 +5,7 @@ cd GLPFT
 # Parameters
 API_NAME=$1
 MODEL=$2
-FILENAME="${3:-job}_api"  # Default value of FILENAME is 'job' if not provided
+FILENAME="../inner_scripts/${3:-job}_api"  # Default value of FILENAME is 'job' if not provided
 
 # Default settings
 USE_LORA=true
