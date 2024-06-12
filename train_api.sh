@@ -24,7 +24,7 @@ if [[ $MODEL == "dev" ]]; then
     CONTEXT_LENGTH=2048
     TARGET_MODULES="query_key_value"
 elif [[ $MODEL == "backbone" ]]; then
-    INPUT_MODEL="iic/alpha-umi-backbone-7b"
+    INPUT_MODEL="saved_models/backbone"
     EXP_NAME=output_pathes/${API_NAME}_backbone/
 elif [[ $MODEL == "caller" ]]; then
     INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
@@ -49,8 +49,6 @@ cat << EOF > ${FILENAME}.sh
 #!/bin/bash
 
 cd GLPFT
-
-INPUT_MODEL="${INPUT_MODEL}"
 
 python train_mine.py \\
     --model_name_or_path ${INPUT_MODEL} \\
