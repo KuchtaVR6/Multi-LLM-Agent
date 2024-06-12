@@ -9,8 +9,9 @@ output_dir = 'dataset/toolbench/train_per_api/'
 # Create output directory if it doesn't exist
 os.makedirs(output_dir, exist_ok=True)
 
-# Initialize a dictionary to store concatenated entries for each API
+# Initialize dictionaries to store concatenated entries and file counts for each API
 api_entries = defaultdict(list)
+api_file_count = defaultdict(int)
 
 # Traverse through all files in the input directory
 for filename in os.listdir(input_dir):
@@ -25,6 +26,7 @@ for filename in os.listdir(input_dir):
         with open(os.path.join(input_dir, filename), 'r') as f:
             entries = json.load(f)
             api_entries[api_name].extend(entries)
+            api_file_count[api_name] += 1
 
 # Write concatenated entries to new JSON files in the output directory
 for api_name, entries in api_entries.items():
@@ -32,7 +34,7 @@ for api_name, entries in api_entries.items():
     with open(output_file, 'w') as f:
         json.dump(entries, f, indent=4)
 
-# Print the number of samples for each API in ascending order
+# Print the number of samples and individual endpoints for each API in ascending order
 sorted_api_entries = sorted(api_entries.items(), key=lambda item: len(item[1]))
 for api_name, entries in sorted_api_entries:
-    print(f'{api_name}: {len(entries)}')
+    print(f'{api_name}: {len(entries)} samples, {api_file_count[api_name]} endpoints merged')
