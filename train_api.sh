@@ -10,18 +10,13 @@ FILENAME="${3:-job}_api"  # Default value of FILENAME is 'job' if not provided
 # Default settings
 USE_LORA=true
 BSZ=4  # Default value of BSZ is 4
-
-# Calculate GA based on BSZ and USE_LORA
-if [[ $USE_LORA == true ]]; then
-    GA=$((32 / BSZ))  # Ensure BSZ * GA = 32 when using LoRA
-else
-    GA=$((8 / BSZ))   # Ensure BSZ * GA = 8 when not using LoRA
-fi
+GA=$((8 / BSZ))   # Ensure BSZ * GA = 8
 
 CONTEXT_LENGTH=4096
 
 # Calculate the number of training samples and epochs
 DATA_PATH="dataset/toolbench/train_separated/certain/${API_NAME}.json"
+EXP_NAME=output_pathes/${API_NAME}/
 
 # Determine the input model based on the third parameter
 if [[ $MODEL == "dev" ]]; then
@@ -30,7 +25,7 @@ if [[ $MODEL == "dev" ]]; then
     TARGET_MODULES="query_key_value"
 elif [[ $MODEL == "backbone" ]]; then
     INPUT_MODEL="iic/alpha-umi-backbone-7b"
-    DATA_PATH="dataset/toolbench/train_separated/certain_backbone_based/${API_NAME}.json"
+    EXP_NAME=output_pathes/${API_NAME}_backbone/
 elif [[ $MODEL == "caller" ]]; then
     INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
 else
@@ -57,7 +52,6 @@ cd GLPFT
 
 INPUT_MODEL="${INPUT_MODEL}"
 
-EXP_NAME=output_pathes/${API_NAME}/
 python train_mine.py \\
     --model_name_or_path \$INPUT_MODEL \\
     --data_path ${DATA_PATH} \\
@@ -71,8 +65,8 @@ python train_mine.py \\
     --save_strategy "steps" \\
     --save_steps 500 \\
     --save_total_limit 8 \\
-    --learning_rate 5e-5 \\
-    --warmup_ratio 0.4 \\
+    --learning_rate 1e-5 \\
+    --warmup_ratio 0.2 \\
     --lr_scheduler_type "cosine" \\
     --gradient_checkpointing True \\
     --logging_steps 2 \\
