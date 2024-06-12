@@ -14,7 +14,13 @@ GA=$((8 / BSZ))   # Ensure BSZ * GA = 8
 
 CONTEXT_LENGTH=4096
 
-# Calculate the number of training samples and epochs
+if [[ $API_NAME == *"_for_"* ]]; then
+  DATA_PATH="dataset/toolbench/train_separated/certain/${API_NAME}.json"
+else
+  DATA_PATH="dataset/toolbench/train_per_api/${API_NAME}.json"
+fi
+
+
 DATA_PATH="dataset/toolbench/train_separated/certain/${API_NAME}.json"
 EXP_NAME=output_pathes/${API_NAME}/
 
