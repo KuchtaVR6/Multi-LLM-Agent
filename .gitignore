@@ -15,3 +15,5 @@
 /**/saved_models
 .DS_Store
 assets/.DS_Store
+
+/**/*_scrape.py
