@@ -168,6 +168,8 @@ def evaluate_reasoning(reasoning, expected_api, apis):
             if number_of_apis_mentioned == 0:
                 return 'no_apis'
             else:
+                print('---')
+                print(reasoning, expected_api)
                 return 'wrong_apis'
     else:
         if number_of_apis_mentioned == 0:
