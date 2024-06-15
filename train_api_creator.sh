@@ -37,12 +37,9 @@ elif [[ $MODEL == "llama" ]]; then
     INPUT_MODEL="meta-llama/Llama-2-7b-hf"
     FILENAME="../inner_scripts/${API_NAME}_llama_api"
     EXP_NAME="output_pathes/${API_NAME}_llama/"
-elif [[ $MODEL == "caller" ]]; then
-    INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
-    FILENAME="../inner_scripts/${API_NAME}_api"
 else
-    echo "Invalid model type. Defaulting to 'caller'."
     INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
+    EXP_NAME="output_pathes/${API_NAME}/"
     FILENAME="../inner_scripts/${API_NAME}_api"
 fi
 
@@ -61,10 +58,20 @@ echo "====================="
 
 NUM_SAMPLES=$(python3 -c "
 import json
-with open('${DATA_PATH}', 'r') as f:
-    data = json.load(f)
-print(len(data))
+import sys
+try:
+    with open('${DATA_PATH}', 'r') as f:
+        data = json.load(f)
+    print(len(data))
+except FileNotFoundError:
+    sys.exit(1)
 ")
+
+if [[ $? -ne 0 ]]; then
+  echo "File not found: ${DATA_PATH}"
+  exit 1
+fi
+
 MIN_SAMPLES=10000
 EPOCHS=$(( (MIN_SAMPLES + NUM_SAMPLES - 1) / NUM_SAMPLES ))
 
