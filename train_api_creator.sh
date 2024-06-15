@@ -4,7 +4,7 @@ cd GLPFT
 
 # Parameters
 API_NAME=$1
-MODEL=$2
+MODEL=${2:-caller}  # Default value of MODEL is 'caller' if not provided
 FILENAME="../inner_scripts/${3:-job}_api"  # Default value of FILENAME is 'job' if not provided
 
 # Default settings
@@ -20,22 +20,40 @@ else
   DATA_PATH="dataset/toolbench/train_per_api/${API_NAME}.json"
 fi
 
-EXP_NAME=output_pathes/${API_NAME}/
+EXP_NAME="output_pathes/${API_NAME}/"
 
-# Determine the input model based on the third parameter
+# Determine the input model based on the second parameter
 if [[ $MODEL == "dev" ]]; then
     INPUT_MODEL="EleutherAI/pythia-160m"
     CONTEXT_LENGTH=2048
     TARGET_MODULES="query_key_value"
+    FILENAME="../inner_scripts/${API_NAME}_dev"
 elif [[ $MODEL == "backbone" ]]; then
     INPUT_MODEL="saved_models/backbone"
-    EXP_NAME=output_pathes/${API_NAME}_backbone/
+    EXP_NAME="output_pathes/${API_NAME}_backbone/"
+    FILENAME="../inner_scripts/${API_NAME}_backbone"
+elif [[ $MODEL == "llama" ]]; then
+    INPUT_MODEL="meta-llama/Llama-2-7b-hf"
+    FILENAME="../inner_scripts/${API_NAME}_llama"
 elif [[ $MODEL == "caller" ]]; then
     INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
+    FILENAME="../inner_scripts/${API_NAME}"
 else
-    echo "Invalid model type. Please choose from {dev, backbone, caller}."
-    exit 1
+    echo "Invalid model type. Defaulting to 'caller'."
+    INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
+    FILENAME="../inner_scripts/${API_NAME}"
 fi
+
+echo "API_NAME: $API_NAME"
+echo "MODEL: $MODEL"
+echo "INPUT_MODEL: $INPUT_MODEL"
+echo "FILENAME: $FILENAME"
+echo "EXP_NAME: $EXP_NAME"
+echo "DATA_PATH: $DATA_PATH"
+echo "CONTEXT_LENGTH: $CONTEXT_LENGTH"
+echo "BSZ: $BSZ"
+echo "GA: $GA"
+echo "USE_LORA: $USE_LORA"
 
 NUM_SAMPLES=$(python3 -c "
 import json
