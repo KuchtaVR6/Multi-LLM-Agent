@@ -28,6 +28,7 @@ if [[ $MODEL == "dev" ]]; then
     CONTEXT_LENGTH=2048
     TARGET_MODULES="query_key_value"
     FILENAME="../inner_scripts/${API_NAME}_dev_api"
+    EXP_NAME="output_pathes/${API_NAME}_dev/"
 elif [[ $MODEL == "backbone" ]]; then
     INPUT_MODEL="saved_models/backbone"
     EXP_NAME="output_pathes/${API_NAME}_backbone/"
@@ -35,6 +36,7 @@ elif [[ $MODEL == "backbone" ]]; then
 elif [[ $MODEL == "llama" ]]; then
     INPUT_MODEL="meta-llama/Llama-2-7b-hf"
     FILENAME="../inner_scripts/${API_NAME}_llama_api"
+    EXP_NAME="output_pathes/${API_NAME}_llama/"
 elif [[ $MODEL == "caller" ]]; then
     INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
     FILENAME="../inner_scripts/${API_NAME}_api"
