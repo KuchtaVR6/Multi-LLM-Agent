@@ -11,6 +11,7 @@
 
 /**/__pycache__
 /**/output_res
+/**/output_pathes
 /**/saved_models
 .DS_Store
 assets/.DS_Store
