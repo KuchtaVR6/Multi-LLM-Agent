@@ -27,23 +27,24 @@ if [[ $MODEL == "dev" ]]; then
     INPUT_MODEL="EleutherAI/pythia-160m"
     CONTEXT_LENGTH=2048
     TARGET_MODULES="query_key_value"
-    FILENAME="../inner_scripts/${API_NAME}_dev"
+    FILENAME="../inner_scripts/${API_NAME}_dev_api"
 elif [[ $MODEL == "backbone" ]]; then
     INPUT_MODEL="saved_models/backbone"
     EXP_NAME="output_pathes/${API_NAME}_backbone/"
-    FILENAME="../inner_scripts/${API_NAME}_backbone"
+    FILENAME="../inner_scripts/${API_NAME}_backbone_api"
 elif [[ $MODEL == "llama" ]]; then
     INPUT_MODEL="meta-llama/Llama-2-7b-hf"
-    FILENAME="../inner_scripts/${API_NAME}_llama"
+    FILENAME="../inner_scripts/${API_NAME}_llama_api"
 elif [[ $MODEL == "caller" ]]; then
     INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
-    FILENAME="../inner_scripts/${API_NAME}"
+    FILENAME="../inner_scripts/${API_NAME}_api"
 else
     echo "Invalid model type. Defaulting to 'caller'."
     INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
-    FILENAME="../inner_scripts/${API_NAME}"
+    FILENAME="../inner_scripts/${API_NAME}_api"
 fi
 
+echo "====================="
 echo "API_NAME: $API_NAME"
 echo "MODEL: $MODEL"
 echo "INPUT_MODEL: $INPUT_MODEL"
@@ -54,6 +55,7 @@ echo "CONTEXT_LENGTH: $CONTEXT_LENGTH"
 echo "BSZ: $BSZ"
 echo "GA: $GA"
 echo "USE_LORA: $USE_LORA"
+echo "====================="
 
 NUM_SAMPLES=$(python3 -c "
 import json
