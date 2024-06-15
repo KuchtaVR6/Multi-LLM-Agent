@@ -22,23 +22,16 @@ import typing
 import torch
 from peft import LoraConfig, get_peft_model
 import transformers
-from transformers import Trainer, BitsAndBytesConfig
-from transformers.utils import is_bitsandbytes_available, is_flash_attn_2_available
+from transformers import Trainer
+from transformers.utils import is_flash_attn_2_available
 
 from train import (
     DataArguments,
     ModelArguments,
-    TrainingArguments,
-    make_supervised_data_module,
+    TrainingArguments
 )
 
-from utils.llama_flash_attn_monkey_patch import (
-    replace_llama_attn_with_flash_attn,
-)
-
-
-# replace_llama_attn_with_flash_attn()
-
+from datasetLoader import make_supervised_data_module
 
 @dataclass
 class LoraArguments:
@@ -64,13 +57,6 @@ def train():
         lora_args,
     ) = parser.parse_args_into_dataclasses()
 
-    # if is_bitsandbytes_available():
-    #     print("Using quantisation ..")
-    #     bnb_config = BitsAndBytesConfig(load_in_4bit=True,
-    #                                     bnb_4bit_quant_type="nf4",
-    #                                     bnb_4bit_compute_dtype=torch.bfloat16)
-    #     model_kwargs = {'quantization_config': bnb_config}
-    # else:
     model_kwargs = {'torch_dtype': torch.bfloat16}
 
     if is_flash_attn_2_available():
