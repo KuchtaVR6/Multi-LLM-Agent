@@ -11,6 +11,7 @@ from collections import defaultdict, Counter
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_path', type=str, default="")
 parser.add_argument('--output_path', type=str, default="")
+parser.add_argument('--only_certain', type=bool, default=False)
 
 args = parser.parse_args()
 
@@ -217,6 +218,10 @@ for d in data:
         else:
             answer_pred.append(pred_ans)
     else:
+        ref_validity = evaluate_reasoning(ref_reason, ref_action, tools_available)
+        if ref_validity != 'correct' and args.only_certain:
+            continue
+
         caller_stats['instances'].append(ref_action)
         if ref_action == pred_action:
             caller_stats['correct_action'].append(ref_action)
@@ -228,7 +233,7 @@ for d in data:
             else:
                 caller_stats['wrong_action'].append(ref_action)
 
-            reasoning_stats['ref valid?'].append(evaluate_reasoning(ref_reason, ref_action, tools_available))
+            reasoning_stats['ref valid?'].append(ref_validity)
             reasoning_stats['pred res valid?'].append(evaluate_reasoning(pred_reason, ref_action, tools_available))
             reasoning_stats['pred reasonable action?'].append(evaluate_reasoning(pred_reason, pred_action, tools_available))
 
