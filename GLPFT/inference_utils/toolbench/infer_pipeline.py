@@ -338,6 +338,7 @@ def infer():
             else:
                 planner_prediction = sample['predictions'] + "Next: caller."
                 sample['planner_prediction'] = planner_prediction
+
             prompt_temp = prompt_dict[data_args.caller_prompt_type]
             tools = sample['tools']
             tool_docs = ""
@@ -345,6 +346,20 @@ def infer():
                 tool_docs += json.dumps(t) + '\n'
             query = prompt_temp.replace('{doc}', tool_docs)
             tool_names = ', '.join([t['Name'] for t in tools])
+
+            sample['caller_sample_id'] = len(infer_samples_caller)  # easier identification
+
+            tool_selected = None
+            # which tool to use
+            for tool_name in tool_names.split(', '):
+                if tool_name in planner_prediction:
+                    if tool_selected:
+                        tool_selected = "[AMBIGUOUS]"
+                        break
+                    else:
+                        tool_selected = tool_name
+            sample['caller_tool_requested'] = tool_selected
+
             query = query.replace("{tool_names}", tool_names)
             query = query.replace('{thought}',sample['planner_prediction'])
             dispatch = sample['dispath'] + ('planner: ' + sample['planner_prediction'] + '</s>')
@@ -352,7 +367,10 @@ def infer():
 
             sample['model_input_for_caller'] = query +" caller: "
             infer_samples_caller.append(sample)
-    
+
+    if process_zero:
+        with open(os.path.join(training_args.output_dir, 'inputs_for_caller.json'), 'w') as f:
+            json.dump(infer_samples_caller,f, indent=4)
 
     # caller inference
     if len(infer_samples_caller) != 0:
@@ -410,12 +428,19 @@ def infer():
 
         torch.cuda.empty_cache()
 
+    without_caller_outputs = infer_samples_planner + infer_samples_summarizer
+    if process_zero:
+        with open(os.path.join(training_args.output_dir, 'predictions_partial.json'), 'w') as f:
+            json.dump(without_caller_outputs,f, indent=4)
 
+    if process_zero:
+        with open(os.path.join(training_args.output_dir, 'predictions_caller.json'), 'w') as f:
+            json.dump(infer_samples_caller,f, indent=4)
 
-    final_infer_sample = infer_samples_caller + infer_samples_planner + infer_samples_summarizer
     if process_zero:
         with open(os.path.join(training_args.output_dir, 'predictions.json'), 'w') as f:
-            json.dump(final_infer_sample,f, indent=4)
+            json.dump(without_caller_outputs + infer_samples_caller,f, indent=4)
+
 
 
 
