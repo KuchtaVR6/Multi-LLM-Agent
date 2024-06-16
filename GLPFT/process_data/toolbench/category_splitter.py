@@ -1,8 +1,25 @@
+import string
 import re
 from tqdm import tqdm
 import os
 import json
 from collections import defaultdict
+
+
+def lower_and_replace_punctuation(text):
+    # Convert to lowercase
+    text = text.lower()
+
+    # Create a translation table: punctuation -> '_'
+    translation_table = str.maketrans(string.punctuation + ' ', '_' * (len(string.punctuation) + 1))
+
+    # Translate the text
+    text = text.translate(translation_table)
+
+    # Replace consecutive underscores with a single underscore
+    text = re.sub('_+', '_', text)
+
+    return text
 
 def load_api_to_category(file_path):
     api_to_category = {}
@@ -13,11 +30,11 @@ def load_api_to_category(file_path):
     return api_to_category
 
 # Load the API to Category mapping once
-api_to_category = load_api_to_category('apiToCategory.txt')
+api_to_category = load_api_to_category('dataset/toolbench/api_categories.txt')
 
 def find_api_category(api_name):
     category = api_to_category.get(api_name, "Category not found")
-    return category
+    return lower_and_replace_punctuation(category)
 
 # Define directories
 input_dir = 'dataset/toolbench/train_per_api/'
@@ -44,19 +61,7 @@ with open('dataset/toolbench/mergeAPIreport.txt') as file:
 for filename in tqdm(os.listdir(input_dir)):
     if filename.endswith('.json'):
         api_name = filename.rsplit('.json', 1)[0]
-
-        if re.search(r'_v(\d+)$', api_name):
-            api_name = api_name.rsplit('_v')[0]
-
-        print(api_name)
-
-        try:
-            category = find_api_category(api_name)
-        except:
-            print(f'Skipped: {api_name}')
-            skipped += 1
-            exit()
-            continue
+        category = find_api_category(api_name)
 
         # Read the JSON file
         with open(os.path.join(input_dir, filename), 'r') as f:
@@ -71,10 +76,9 @@ for filename in tqdm(os.listdir(input_dir)):
             category_stats[category]['api_count'] += 1
             category_stats[category]['end_point_count'] += end_point_counts[api_name]
             category_stats[category]['samples_count'] += len(entries)
-            category_stats[api_name] += 1
 
 # Write concatenated entries to new JSON files in the output directory
-for api_name, entries in category_entries.items():
+for api_name, entries in tqdm(category_entries.items()):
     output_file = os.path.join(output_dir, f'{api_name}.json')
     with open(output_file, 'w') as f:
         json.dump(entries, f, indent=4)
