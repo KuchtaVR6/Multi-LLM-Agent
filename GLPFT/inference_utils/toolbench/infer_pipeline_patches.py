@@ -51,6 +51,12 @@ def evaluate_rougel(cand_list: list, ref_list: list):
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
+@dataclass
+class ModelArguments:
+    planner_model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
+    caller_model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
+    summarizer_model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
+    model_suffix: Optional[str] = field(default="")
 
 @dataclass
 class DataArguments:
@@ -62,6 +68,32 @@ class DataArguments:
         default=1750
     )
     num_infer_samples: int = field(default=-1)
+    planner_prompt_type: str = field(
+        default='v1', metadata={"help": "the prompt template"}
+    )
+    caller_prompt_type: str = field(
+        default='v1', metadata={"help": "the prompt template"}
+    )
+    summarizer_prompt_type: str = field(
+        default='v1', metadata={"help": "the prompt template"}
+    )
+
+@dataclass
+class TrainingArguments(transformers.TrainingArguments):
+    cache_dir: Optional[str] = field(default=None)
+    optim: str = field(default="adamw_torch")
+    model_max_length: int = field(
+        default=512,
+        metadata={
+            "help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."
+        },
+    )
+    generation_config: Optional[Union[str, Path, GenerationConfig]] = field(
+        default=None,
+        metadata={
+            "help": "Model id, file path or url pointing to a GenerationConfig json file, to use during prediction."
+        },
+    )
 
 def nested_load_test_data(data_path):
     test_raw_data = []
@@ -169,25 +201,11 @@ class Collator(object):
         )
 
 
-def load_model_and_tokenizer(model_name_or_path, use_lora, use_logit_smooth):
-    if use_lora:
-        config = PeftConfig.from_pretrained(model_name_or_path)
-        tokenizer = transformers.AutoTokenizer.from_pretrained(config.base_model_name_or_path, use_fast=False)
-        if use_logit_smooth:
-            model = LlamaForCausalLM_wrapper.from_pretrained(config.base_model_name_or_path)
-        else:
-            model = transformers.AutoModelForCausalLM.from_pretrained(
-                config.base_model_name_or_path
-            )
-        model = PeftModel.from_pretrained(model, model_name_or_path)
-    else:
-        tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path, use_fast=False)
-        if use_logit_smooth:
-            model = LlamaForCausalLM_wrapper.from_pretrained(model_name_or_path)
-        else:
-            model = transformers.AutoModelForCausalLM.from_pretrained(
-                model_name_or_path
-            )
+def load_plain_model_and_tokenizer(model_name_or_path):
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path, use_fast=False)
+    model = transformers.AutoModelForCausalLM.from_pretrained(
+        model_name_or_path
+    )
     if tokenizer.pad_token_id == None:
         tokenizer.add_special_tokens({"bos_token": "<s>", "eos_token": "</s>", "pad_token": "<pad>"})
         model.resize_token_embeddings(len(tokenizer))
@@ -207,22 +225,30 @@ def infer():
 
     print('load model begin')
 
-    planner_model, planner_tokenizer = load_model_and_tokenizer(model_args.planner_model_name_or_path, model_args.planner_use_lora, model_args.use_logit_smooth)
-    
-    data_collator = Collator(planner_tokenizer, data_args)
+    # planner_model, planner_tokenizer = load_plain_model_and_tokenizer(model_args.planner_model_name_or_path)
+    #
+    # data_collator = Collator(planner_tokenizer, data_args)
+    #
+    # planner_trainer = TrainerForPred(
+    #     model=planner_model, tokenizer=planner_tokenizer, data_collator=data_collator
+    # ) # TODO REVERT
 
-    planner_trainer = TrainerForPred(
-        model=planner_model, tokenizer=planner_tokenizer, args=training_args, data_collator=data_collator
-    )
+    with open('output_res/toolbench/in_domain/predictions.json', 'rb') as file:
+        original_predictions = json.load(file)
 
-    process_zero = planner_trainer.is_local_process_zero()
+    for sample in infer_samples[:20]:
+        print(sample['history'][-1])
+        for original_prediction in original_predictions:
+            if sample['model_input'] in str(original_prediction):
+                print('hi!!!')
 
-    if process_zero:
-        if not os.path.exists(training_args.output_dir):
-            os.makedirs(training_args.output_dir)
-        
+
+    exit()
+
     test_dataset = InferDataset([d['model_input'] for d in infer_samples], data_collator, data_args)
     outputs,_ = planner_trainer.predict(test_dataset)
+
+    exit()
 
 
     for i, o in enumerate(outputs):
@@ -301,7 +327,7 @@ def infer():
 
     # caller inference
     if len(infer_samples_caller) != 0:
-        caller_model, caller_tokenier = load_model_and_tokenizer(model_args.caller_model_name_or_path, model_args.caller_use_lora, model_args.use_logit_smooth)
+        caller_model, caller_tokenier = load_plain_model_and_tokenizer(model_args.caller_model_name_or_path, model_args.caller_use_lora, model_args.use_logit_smooth)
         caller_trainer = TrainerForPred(
             model=caller_model, tokenizer=caller_tokenier, args=training_args, data_collator=data_collator
         )
@@ -328,7 +354,7 @@ def infer():
 
     # summarizer inference
     if len(infer_samples_summarizer) != 0:
-        summarizer_model, summarizer_tokenier = load_model_and_tokenizer(model_args.summarizer_model_name_or_path, model_args.summarizer_use_lora, model_args.use_logit_smooth)
+        summarizer_model, summarizer_tokenier = load_plain_model_and_tokenizer(model_args.summarizer_model_name_or_path, model_args.summarizer_use_lora, model_args.use_logit_smooth)
         summarizer_trainer = TrainerForPred(
             model=summarizer_model, tokenizer=summarizer_tokenier, args=training_args, data_collator=data_collator
         )
@@ -354,7 +380,6 @@ def infer():
         gc.collect()
 
         torch.cuda.empty_cache()
-
 
 
     final_infer_sample = infer_samples_caller + infer_samples_planner + infer_samples_summarizer
