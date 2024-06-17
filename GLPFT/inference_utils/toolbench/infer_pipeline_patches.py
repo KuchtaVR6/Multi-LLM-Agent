@@ -22,7 +22,6 @@ import json
 from typing import Dict, Optional, Union
 import os
 
-import copy
 from pathlib import Path
 from transformers.generation.configuration_utils import GenerationConfig
 
@@ -30,14 +29,11 @@ import torch
 from torch.utils.data import Dataset
 import transformers
 from transformers.trainer_pt_utils import LabelSmoother
-from peft import PeftModel, PeftConfig
 
 from rouge import Rouge
 import gc
 
 from utils.trainer_utils import TrainerForPred
-from utils.prompt_lib import prompt_dict
-from utils.modeling_llama import LlamaForCausalLM_wrapper
 
 
 def evaluate_rougel(cand_list: list, ref_list: list):
@@ -111,56 +107,6 @@ def nested_load_test_data(data_path):
         return []
 
 
-def build_infer_samples(data_args):
-    print("Loading data...")
-    data_paths = data_args.data_path.split(',')
-    # we will organize the data by file
-    raw_data = []
-    for data_path in data_paths:
-        raw_data += nested_load_test_data(data_path=data_path)
-    conversations = []
-    if data_args.num_infer_samples > 0:
-        raw_data = raw_data[:data_args.num_infer_samples]
-    # Apply prompt templates
-    prompt_temp = prompt_dict[data_args.planner_prompt_type]
-    for d in raw_data:
-        c = d['conversations']
-        tool_docs = ""
-        for t in d['tools']:
-            tool_docs += json.dumps(t) + '\n'    
-        tool_names = ', '.join([t['Name'] for t in d['tools']])
-        query_temp = prompt_temp.replace('{doc}', tool_docs).replace('{tool_names}',tool_names)
-        dispatch = ""
-        for j,u in enumerate(c):
-            if u['from'] == 'assistant':
-                if "Next: caller." in u['value'] or "Next: conclusion." in u['value'] or "Next: give up." in u['value']:
-                    prompt = query_temp.replace('{history}',dispatch)
-                    if "Next: caller" in u['value'] or "Next: conclusion." in u['value']:
-                        # assert c[j+1]['from'] == 'caller'
-                        reference = u['from'] + ': ' + u['value'] +"</s>"+ c[j+1]['from'] + ": " + c[j+1]['value'] + '</s>'
-                    else:
-                        reference = u['value']
-                    conversations.append({
-                        'tools':d['tools'],
-                        'instruction':d['instruction'],
-                        'history':c[:j],
-                        "dispath": copy.deepcopy(dispatch),
-                        'model_input': prompt + ' assistant: ',
-                        'reference': reference
-                    })
-                dispatch += ('assistant: '+u['value']+'</s>')
-            elif u['from'] == 'user':
-                dispatch += ('user: '+u['value']+'</s>')
-            elif u['from'] == 'observation':
-                dispatch += ('observation: '+u['value'])
-            elif u['from'] == 'caller':
-                dispatch += ('caller: '+u['value']+'</s>')
-            elif u['from'] == 'conclusion':
-                dispatch += ('conclusion: '+u['value']+'</s>')
-    
-    return conversations
-
-
 class InferDataset(Dataset):
     def __init__(self, raw_data, tokenizer: transformers.PreTrainedTokenizer, args):
         super(InferDataset, self).__init__()
@@ -218,123 +164,20 @@ def infer():
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-
-
-    # load data
-    infer_samples = build_infer_samples(data_args)
-
-    print('load model begin')
-
-    # planner_model, planner_tokenizer = load_plain_model_and_tokenizer(model_args.planner_model_name_or_path)
-    #
-    # data_collator = Collator(planner_tokenizer, data_args)
-    #
-    # planner_trainer = TrainerForPred(
-    #     model=planner_model, tokenizer=planner_tokenizer, data_collator=data_collator
-    # ) # TODO REVERT
-
-    with open('output_res/toolbench/in_domain/predictions.json', 'rb') as file:
-        original_predictions = json.load(file)
-
-    for sample in infer_samples[:20]:
-        print(sample['history'][-1])
-        for original_prediction in original_predictions:
-            if sample['model_input'] in str(original_prediction):
-                print('hi!!!')
-
-
-    exit()
-
-    test_dataset = InferDataset([d['model_input'] for d in infer_samples], data_collator, data_args)
-    outputs,_ = planner_trainer.predict(test_dataset)
-
-    exit()
-
-
-    for i, o in enumerate(outputs):
-        candidate = planner_tokenizer.decode(o, skip_special_tokens=True)
-        if candidate.startswith(': '):
-            candidate = candidate[2:]
-        if candidate.strip() in ['','.',',']:
-            candidate = 'none'
-        infer_samples[i]['predictions'] = candidate
-
-        # empty cache
-    planner_model.to('cpu')
-    planner_trainer.model.to('cpu')
-    planner_trainer.model_wrapped.to('cpu')
-    del planner_model
-    del planner_tokenizer
-    del planner_trainer.model
-    del planner_trainer.model_wrapped
-    del planner_trainer
-    gc.collect()
-
-    torch.cuda.empty_cache()
-
-
-    infer_samples_planner = []
-    infer_samples_caller = []
-    infer_samples_summarizer = []
-    for sample in infer_samples:
-        if "Next: give up." in sample['predictions']:
-            action_end_idx = sample['predictions'].index("Next: give up.")
-            planner_prediction = sample['predictions'][:action_end_idx + len("Next: give up.")]
-            sample['predictions'] = planner_prediction
-            infer_samples_planner.append(sample)
-        elif "Next: conclusion." in sample['predictions']:
-            # conclusion
-            action_end_idx = sample['predictions'].index("Next: conclusion.")
-            planner_prediction = sample['predictions'][:action_end_idx + len("Next: conclusion.")]
-            sample['planner_prediction'] = planner_prediction
-            prompt_temp = prompt_dict[data_args.summarizer_prompt_type]
-            tools = sample['tools']
-            tool_docs = ""
-            for t in tools:
-                tool_docs += json.dumps(t) + '\n'
-            query = prompt_temp.replace('{doc}', tool_docs)
-            tool_names = ', '.join([t['Name'] for t in tools])
-            query = query.replace("{tool_names}", tool_names)
-            query = query.replace('{thought}',sample['planner_prediction'])
-            dispatch = sample['dispath'] + ('planner: ' + sample['planner_prediction'] + '</s>')
-            query = query.replace('{history}',dispatch)
-
-            sample['model_input_for_summarizer'] = query +" conclusion: "
-            infer_samples_summarizer.append(sample)
-        else:
-            if "Next: caller." in sample['predictions']:
-                action_end_idx = sample['predictions'].index("Next: caller.")
-                planner_prediction = sample['predictions'][:action_end_idx + len("Next: caller.")]
-                sample['planner_prediction'] = planner_prediction
-            else:
-                planner_prediction = sample['predictions'] + "Next: caller."
-                sample['planner_prediction'] = planner_prediction
-            prompt_temp = prompt_dict[data_args.caller_prompt_type]
-            tools = sample['tools']
-            tool_docs = ""
-            for t in tools:
-                tool_docs += json.dumps(t) + '\n'
-            query = prompt_temp.replace('{doc}', tool_docs)
-            tool_names = ', '.join([t['Name'] for t in tools])
-            query = query.replace("{tool_names}", tool_names)
-            query = query.replace('{thought}',sample['planner_prediction'])
-            dispatch = sample['dispath'] + ('planner: ' + sample['planner_prediction'] + '</s>')
-            query = query.replace('{history}',dispatch)
-
-            sample['model_input_for_caller'] = query +" caller: "
-            infer_samples_caller.append(sample)
-    
+    with open('output_res_partial/toolbench/in_domain/inputs_for_caller.json', 'rb') as file:
+        infer_samples_caller = json.load(file)
 
     # caller inference
     if len(infer_samples_caller) != 0:
-        caller_model, caller_tokenier = load_plain_model_and_tokenizer(model_args.caller_model_name_or_path, model_args.caller_use_lora, model_args.use_logit_smooth)
+        caller_model, caller_tokenizer = load_plain_model_and_tokenizer(model_args.caller_model_name_or_path)
+        data_collator = Collator(caller_tokenizer, data_args)
         caller_trainer = TrainerForPred(
-            model=caller_model, tokenizer=caller_tokenier, args=training_args, data_collator=data_collator
+            model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
         )
-        caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in infer_samples_caller], data_collator, data_args)
+        caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in infer_samples_caller], caller_tokenizer, data_args)
         outputs,_ = caller_trainer.predict(caller_test_dataset)
         for i, o in enumerate(outputs):
-            candidate = caller_tokenier.decode(o, skip_special_tokens=True)
+            candidate = caller_tokenizer.decode(o, skip_special_tokens=True)
             if candidate.startswith(': '):
                 candidate = candidate[2:]
             if candidate.strip() in ['','.',',']:
@@ -344,39 +187,10 @@ def infer():
         caller_trainer.model.to('cpu')
         caller_trainer.model_wrapped.to('cpu')
         del caller_model
-        del caller_tokenier
+        del caller_tokenizer
         del caller_trainer.model
         del caller_trainer.model_wrapped
         del caller_trainer
-        gc.collect()
-
-        torch.cuda.empty_cache()
-
-    # summarizer inference
-    if len(infer_samples_summarizer) != 0:
-        summarizer_model, summarizer_tokenier = load_plain_model_and_tokenizer(model_args.summarizer_model_name_or_path, model_args.summarizer_use_lora, model_args.use_logit_smooth)
-        summarizer_trainer = TrainerForPred(
-            model=summarizer_model, tokenizer=summarizer_tokenier, args=training_args, data_collator=data_collator
-        )
-
-
-        summarizer_test_dataset = InferDataset([d['model_input_for_summarizer'] for d in infer_samples_summarizer], data_collator, data_args)
-        outputs,_ = summarizer_trainer.predict(summarizer_test_dataset)
-        for i, o in enumerate(outputs):
-            candidate = summarizer_tokenier.decode(o, skip_special_tokens=True)
-            if candidate.startswith(': '):
-                candidate = candidate[2:]
-            if candidate.strip() in ['','.',',']:
-                candidate = 'none'
-            infer_samples_summarizer[i]['predictions'] = "asssitant: " + infer_samples_summarizer[i]['planner_prediction'] + "</s>conclusion: " + candidate
-        summarizer_model.to('cpu')
-        summarizer_trainer.model.to('cpu')
-        summarizer_trainer.model_wrapped.to('cpu')
-        del summarizer_model
-        del summarizer_tokenier
-        del summarizer_trainer.model
-        del summarizer_trainer.model_wrapped
-        del summarizer_trainer
         gc.collect()
 
         torch.cuda.empty_cache()
