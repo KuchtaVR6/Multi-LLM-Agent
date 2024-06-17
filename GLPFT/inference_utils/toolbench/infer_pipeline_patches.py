@@ -18,6 +18,7 @@
 
 
 from dataclasses import dataclass, field
+from collections import defaultdict
 import json
 from typing import Dict, Optional, Union
 import os
@@ -47,12 +48,14 @@ def evaluate_rougel(cand_list: list, ref_list: list):
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
+
 @dataclass
 class ModelArguments:
     planner_model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
     caller_model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
     summarizer_model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
     model_suffix: Optional[str] = field(default="")
+
 
 @dataclass
 class DataArguments:
@@ -74,6 +77,7 @@ class DataArguments:
         default='v1', metadata={"help": "the prompt template"}
     )
 
+
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
     cache_dir: Optional[str] = field(default=None)
@@ -91,6 +95,7 @@ class TrainingArguments(transformers.TrainingArguments):
         },
     )
 
+
 def nested_load_test_data(data_path):
     test_raw_data = []
     if os.path.isdir(data_path):
@@ -99,8 +104,8 @@ def nested_load_test_data(data_path):
             test_raw_data += temp_test
         return test_raw_data
     elif os.path.isfile(data_path) and data_path.endswith('.json'):
-        print("Load data from",data_path)
-        temp_data =  json.load(open(data_path, "r"))
+        print("Load data from", data_path)
+        temp_data = json.load(open(data_path, "r"))
         test_raw_data = temp_data
         return test_raw_data
     else:
@@ -118,17 +123,16 @@ class InferDataset(Dataset):
         return len(self.raw_data)
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
-
         return self.raw_data[i]
 
-        
+
 class Collator(object):
     def __init__(self, tokenizer, args):
         self.tokenizer = tokenizer
         self.args = args
-    
+
     def __call__(self, features):
-        input_ids = [self.tokenizer.encode(x) for x in features] # tokens, not pad
+        input_ids = [self.tokenizer.encode(x) for x in features]  # tokens, not pad
         max_len = max([len(t) for t in input_ids])
         max_len = min(self.args.max_input_length, max_len)
         new_input_ids = []
@@ -142,8 +146,8 @@ class Collator(object):
         attention_mask = torch.ne(input_ids, self.tokenizer.pad_token_id)
         attention_mask = torch.zeros_like(input_ids).masked_fill(attention_mask, 1)
         return dict(
-            input_ids = input_ids,
-            attention_mask = attention_mask
+            input_ids=input_ids,
+            attention_mask=attention_mask
         )
 
 
@@ -157,13 +161,6 @@ def load_plain_model_and_tokenizer(model_name_or_path):
         model.resize_token_embeddings(len(tokenizer))
     return model, tokenizer
 
-def parse_api_categories():
-    api_categories = {}
-    with open('dataset/toolbench/api_categories.txt', 'r') as f:
-        for line in f:
-            api_fam, category = line.strip().split(': ')
-            api_categories[api_fam] = category
-    return api_categories
 
 def find_all_patches(model_suffix):
     if not model_suffix:
@@ -180,46 +177,106 @@ def find_all_patches(model_suffix):
         if any(file.endswith('.safetensors') for file in filenames):
             # Get the last folder in the chain
             last_folder = os.path.basename(dirpath)
-            if model_suffix:
+            if model_suffix != 'caller':
                 last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
             safetensors_dict[dirpath] = last_folder
 
     return safetensors_dict
 
-def categorize_patches(patches_available, api_categories):
-    pass
+
+def parse_api_categories():
+    api_categories = {}
+    with open('dataset/toolbench/api_categories.txt', 'r') as f:
+        for line in f:
+            api_fam, category = line.strip().split(': ')
+            api_categories[api_fam] = category
+    return api_categories
+
+api_categories = parse_api_categories()
+
+def parse_patch_name(name):
+    if name in api_categories.values():
+        return {
+            'category': name,
+            'api_family': None,
+            'endpoint': None,
+        }, 'category'
+    if '_for_' in name:
+        endpoint, api_family = name.split('_for_')
+        patch_type = 'endpoint'
+    else:
+        endpoint = None
+        api_family = name
+        patch_type = 'api_family'
+    category = api_categories[api_family]
+    return {
+        'category': category,
+        'api_family': api_family,
+        'endpoint': endpoint
+    }, patch_type
+
+
+def categorize_patches(patches_available):
+    patch_navigation_map = defaultdict(lambda: defaultdict(lambda: defaultdict(str)))
+    for dirpath, patch_name in patches_available.items():
+        hierarchy, patch_type = parse_patch_name(patch_name)
+        patch_navigation_map[hierarchy['category']][hierarchy['api_family']][hierarchy['endpoint']] = dirpath
+    return patch_navigation_map
+
+
+def find_valid_patches(tool_name, categorized_patches):
+    valid_patches = []
+    hierarchy, _ = parse_patch_name(tool_name)
+    if hierarchy['category'] in categorized_patches:
+        category_entries = categorized_patches[hierarchy['category']]
+        if None in category_entries:
+            valid_patches.append(category_entries[None][None])  # category-wide patch
+        if hierarchy['api_family'] in category_entries:
+            api_family_entries = category_entries[hierarchy['api_family']]
+            if None in api_family_entries:
+                valid_patches.append(api_family_entries[None])  # api_family-wide patch
+            if hierarchy['endpoint'] in api_family_entries:
+                valid_patches.append(api_family_entries[hierarchy['endpoint']])  # endpoint-specific patch
+    return valid_patches
+
 
 def infer():
-
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     patches_available = find_all_patches(model_args.model_suffix)
-    api_categories = parse_api_categories()
 
-    categorized_patches = categorize_patches(patches_available, api_categories)
+    categorized_patches = categorize_patches(patches_available)
 
     with open('output_res_partial/toolbench/in_domain/inputs_for_caller.json', 'rb') as file:
         infer_samples_caller = json.load(file)
 
     # caller inference
     if len(infer_samples_caller) != 0:
+        for entry in infer_samples_caller:
+            tool_requested = entry['caller_tool_requested']
+            print(find_valid_patches(tool_requested, categorized_patches))
+
+        exit()
+
         caller_model, caller_tokenizer = load_plain_model_and_tokenizer(model_args.caller_model_name_or_path)
         data_collator = Collator(caller_tokenizer, data_args)
         caller_trainer = TrainerForPred(
             model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
         )
-        caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in infer_samples_caller], caller_tokenizer, data_args)
-        outputs,_ = caller_trainer.predict(caller_test_dataset)
+        caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in infer_samples_caller],
+                                           caller_tokenizer, data_args)
+        outputs, _ = caller_trainer.predict(caller_test_dataset)
         for i, o in enumerate(outputs):
             candidate = caller_tokenizer.decode(o, skip_special_tokens=True)
             if candidate.startswith(': '):
                 candidate = candidate[2:]
-            if candidate.strip() in ['','.',',']:
+            if candidate.strip() in ['', '.', ',']:
                 candidate = 'none'
-            infer_samples_caller[i]['predictions'] = "asssitant: " + infer_samples_caller[i]['planner_prediction'] + "</s>caller: " + candidate
+            infer_samples_caller[i]['predictions'] = "asssitant: " + infer_samples_caller[i][
+                'planner_prediction'] + "</s>caller: " + candidate
         caller_model.to('cpu')
         caller_trainer.model.to('cpu')
         caller_trainer.model_wrapped.to('cpu')
@@ -236,8 +293,7 @@ def infer():
     final_infer_sample = infer_samples_caller + infer_samples_planner + infer_samples_summarizer
     if process_zero:
         with open(os.path.join(training_args.output_dir, 'predictions.json'), 'w') as f:
-            json.dump(final_infer_sample,f, indent=4)
-
+            json.dump(final_infer_sample, f, indent=4)
 
 
 if __name__ == "__main__":
