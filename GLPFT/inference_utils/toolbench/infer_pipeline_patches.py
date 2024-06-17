@@ -157,6 +157,14 @@ def load_plain_model_and_tokenizer(model_name_or_path):
         model.resize_token_embeddings(len(tokenizer))
     return model, tokenizer
 
+def parse_api_categories():
+    api_categories = {}
+    with open('dataset/toolbench/api_categories.txt', 'r') as f:
+        for line in f:
+            api_fam, category = line.strip().split(': ')
+            api_categories[api_fam] = category
+    return api_categories
+
 def find_all_patches(model_suffix):
     if not model_suffix:
         model_suffix = 'caller'
@@ -176,12 +184,10 @@ def find_all_patches(model_suffix):
                 last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
             safetensors_dict[dirpath] = last_folder
 
-    # Print the results
-    for path, folder in safetensors_dict.items():
-        print(f"Path: {path}, Last folder: {folder}")
+    return safetensors_dict
 
-    exit()
-
+def categorize_patches(patches_available, api_categories):
+    pass
 
 def infer():
 
@@ -190,7 +196,10 @@ def infer():
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    find_all_patches(model_args.model_suffix)
+    patches_available = find_all_patches(model_args.model_suffix)
+    api_categories = parse_api_categories()
+
+    categorized_patches = categorize_patches(patches_available, api_categories)
 
     with open('output_res_partial/toolbench/in_domain/inputs_for_caller.json', 'rb') as file:
         infer_samples_caller = json.load(file)
