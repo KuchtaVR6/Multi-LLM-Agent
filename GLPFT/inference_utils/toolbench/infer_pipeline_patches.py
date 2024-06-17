@@ -30,6 +30,7 @@ import torch
 from torch.utils.data import Dataset
 import transformers
 from transformers.trainer_pt_utils import LabelSmoother
+from peft import PeftConfig
 
 from rouge import Rouge
 import gc
@@ -51,9 +52,6 @@ IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
 @dataclass
 class ModelArguments:
-    planner_model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
-    caller_model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
-    summarizer_model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
     model_suffix: Optional[str] = field(default="")
 
 
@@ -151,7 +149,20 @@ class Collator(object):
         )
 
 
-def load_plain_model_and_tokenizer(model_name_or_path):
+def load_plain_model_and_tokenizer(model_suffix, patches_available):
+
+    if not model_suffix:
+        model_suffix = 'caller'
+
+    patches_root_directory = f'output_pathes/{model_suffix}/'
+
+    if model_suffix == 'llama':
+        model_name_or_path = "meta-llama/Llama-2-7b-hf"
+    elif model_suffix == 'backbone':
+        model_name_or_path = "saved_models/backbone"
+    else:
+        model_name_or_path = "saved_models/caller"
+
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path, use_fast=False)
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_name_or_path
@@ -159,6 +170,11 @@ def load_plain_model_and_tokenizer(model_name_or_path):
     if tokenizer.pad_token_id == None:
         tokenizer.add_special_tokens({"bos_token": "<s>", "eos_token": "</s>", "pad_token": "<pad>"})
         model.resize_token_embeddings(len(tokenizer))
+
+    for patch_dir in patches_available.keys():
+        current_config = PeftConfig(patches_root_directory + patch_dir)
+        model.add_adapter(current_config, adapter_name=patch_dir)
+
     return model, tokenizer
 
 
@@ -240,6 +256,17 @@ def find_valid_patches(tool_name, categorized_patches):
     return valid_patches
 
 
+def transpose_dict(input_dict):
+    transposed_dict = {}
+
+    for element, options in input_dict.items():
+        for option in options:
+            if option not in transposed_dict:
+                transposed_dict[option] = []
+            transposed_dict[option].append(element)
+
+    return transposed_dict
+
 def infer():
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
@@ -255,28 +282,38 @@ def infer():
 
     # caller inference
     if len(infer_samples_caller) != 0:
-        for entry in infer_samples_caller:
-            tool_requested = entry['caller_tool_requested']
-            print(find_valid_patches(tool_requested, categorized_patches))
+        sample_to_patches = {}
+        for sample in infer_samples_caller:
+            tool_requested = sample['caller_tool_requested']
+            patches = find_valid_patches(tool_requested, categorized_patches)
+            if patches:
+                sample_to_patches[sample] = patches
 
-        exit()
+        patches_to_samples = transpose_dict(sample_to_patches)
 
-        caller_model, caller_tokenizer = load_plain_model_and_tokenizer(model_args.caller_model_name_or_path)
+        caller_model, caller_tokenizer = load_plain_model_and_tokenizer(model_args.model_suffix, patches_available)
         data_collator = Collator(caller_tokenizer, data_args)
         caller_trainer = TrainerForPred(
             model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
         )
-        caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in infer_samples_caller],
-                                           caller_tokenizer, data_args)
-        outputs, _ = caller_trainer.predict(caller_test_dataset)
-        for i, o in enumerate(outputs):
-            candidate = caller_tokenizer.decode(o, skip_special_tokens=True)
-            if candidate.startswith(': '):
-                candidate = candidate[2:]
-            if candidate.strip() in ['', '.', ',']:
-                candidate = 'none'
-            infer_samples_caller[i]['predictions'] = "asssitant: " + infer_samples_caller[i][
-                'planner_prediction'] + "</s>caller: " + candidate
+
+        for patch, samples in patches_to_samples.items():
+            caller_model.set_adapter(patch)
+            caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in samples], caller_tokenizer,
+                                               data_args)
+            outputs, _ = caller_trainer.predict(caller_test_dataset)
+            for i, o in enumerate(outputs):
+                candidate = caller_tokenizer.decode(o, skip_special_tokens=True)
+                if candidate.startswith(': '):
+                    candidate = candidate[2:]
+                if candidate.strip() in ['', '.', ',']:
+                    candidate = 'none'
+                samples[i]['predictions'] = "asssitant: " + samples[i][
+                    'planner_prediction'] + "</s>caller: " + candidate
+
+            with open(os.path.join(training_args.output_dir, patch, 'predictions.json'), 'w') as f:
+                json.dump(samples, f, indent=4)
+
         caller_model.to('cpu')
         caller_trainer.model.to('cpu')
         caller_trainer.model_wrapped.to('cpu')
@@ -288,12 +325,6 @@ def infer():
         gc.collect()
 
         torch.cuda.empty_cache()
-
-
-    final_infer_sample = infer_samples_caller + infer_samples_planner + infer_samples_summarizer
-    if process_zero:
-        with open(os.path.join(training_args.output_dir, 'predictions.json'), 'w') as f:
-            json.dump(final_infer_sample, f, indent=4)
 
 
 if __name__ == "__main__":
