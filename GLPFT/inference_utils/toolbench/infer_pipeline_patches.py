@@ -157,12 +157,40 @@ def load_plain_model_and_tokenizer(model_name_or_path):
         model.resize_token_embeddings(len(tokenizer))
     return model, tokenizer
 
+def find_all_patches(model_suffix):
+    if not model_suffix:
+        model_suffix = 'caller'
+
+    root_directory = f'output_pathes/{model_suffix}/'
+
+    safetensors_dict = {}
+
+    if not os.path.exists(root_directory):
+        raise FileNotFoundError(f"Error: The directory {root_directory} does not exist.")
+
+    for dirpath, dirnames, filenames in os.walk(root_directory):
+        if any(file.endswith('.safetensors') for file in filenames):
+            # Get the last folder in the chain
+            last_folder = os.path.basename(dirpath)
+            if model_suffix:
+                last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
+            safetensors_dict[dirpath] = last_folder
+
+    # Print the results
+    for path, folder in safetensors_dict.items():
+        print(f"Path: {path}, Last folder: {folder}")
+
+    exit()
+
+
 def infer():
 
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+
+    find_all_patches(model_args.model_suffix)
 
     with open('output_res_partial/toolbench/in_domain/inputs_for_caller.json', 'rb') as file:
         infer_samples_caller = json.load(file)
