@@ -7,7 +7,7 @@
 *.pickle
 /GLPFT/dataset/**
 /data/**
-
+/GLPFT/output_pathes/*
 
 /**/__pycache__
 /**/output_res
