@@ -1,7 +1,7 @@
 cd ./GLPFT
 
 RAW_DATA_OUT_DIR="dataset/toolbench/train/raw_data"
-TRAIN_DATA_OUT_DIR="dataset/toolbench/train_separated/"
+TRAIN_DATA_OUT_DIR="dataset/toolbench/new_data/"
 export PYTHONPATH=./
 
 for MODE in 'caller'

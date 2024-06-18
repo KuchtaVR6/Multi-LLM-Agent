@@ -3,6 +3,10 @@ import argparse
 import os
 import random
 from collections import defaultdict
+
+from tqdm import tqdm
+import string
+import re
 from utils.prompt_lib import prompt_dict
 
 parser = argparse.ArgumentParser()
@@ -57,7 +61,7 @@ api_counts_certain = defaultdict(list)
 api_counts_all = defaultdict(list)
 
 # Loop through each item in the 'data' list
-for d in data:
+for d in tqdm(data):
     tool_docs = ""  # Initialize an empty string to hold the tool documentation
 
     # Loop through each tool in the current data item
@@ -150,16 +154,92 @@ def split_data(data, test_size=0.1):
     return data[:split_index], data[split_index:]
 
 
+api_name_seperator = '_for_'
+
+def load_api_to_category(file_path):
+    api_to_category = {}
+    with open(file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            api_name, category = line.strip().split(': ')
+            api_to_category[api_name] = category
+    return api_to_category
+
+def lower_and_replace_punctuation(text):
+    # Convert to lowercase
+    text = text.lower()
+
+    # Create a translation table: punctuation -> '_'
+    translation_table = str.maketrans(string.punctuation + ' ', '_' * (len(string.punctuation) + 1))
+
+    # Translate the text
+    text = text.translate(translation_table)
+
+    # Replace consecutive underscores with a single underscore
+    text = re.sub('_+', '_', text)
+
+    return text
+
+# Load the API to Category mapping once
+api_to_category = load_api_to_category('dataset/toolbench/api_categories.txt')
+
+def find_api_category(api_name):
+    category = api_to_category.get(api_name, "Category not found")
+    return lower_and_replace_punctuation(category)
+
 for api_count_type, dir_path in [[api_counts_certain, all_apis_path], [api_counts_all, certain_apis_path]]:
-    for api, cases in api_count_type.items():
+    api_entries_train = defaultdict(list)
+    api_entries_test = defaultdict(list)
+    category_entries_train = defaultdict(list)
+    category_entries_test = defaultdict(list)
+
+    for final_folder in ['endpoint', 'api_family', 'category']:
+        if not os.path.exists(dir_path + '/' + final_folder):
+            os.makedirs(dir_path + '/' + final_folder)
+
+    for api, cases in tqdm(api_count_type.items()):
+        if api_name_seperator not in api:
+            continue  # exclude the ones that are not conforming to the syntax
         train_cases, test_cases = split_data(cases)
 
         # Save train cases
-        train_file_path = os.path.join(dir_path, f'{api}_train.json')
+        train_file_path = os.path.join(dir_path, 'endpoint/', f'{api}_train.json')
         with open(train_file_path, 'w', encoding='utf-8') as file:
             json.dump(train_cases, file, indent=2)
 
         # Save test cases
-        test_file_path = os.path.join(dir_path, f'{api}_test.json')
+        test_file_path = os.path.join(dir_path, 'endpoint/', f'{api}_test.json')
         with open(test_file_path, 'w', encoding='utf-8') as file:
             json.dump(test_cases, file, indent=2)
+
+        endpoint, api_name = api.rsplit(api_name_seperator, 1)
+        api_entries_train[api_name].extend(train_cases)
+        api_entries_test[api_name].extend(test_cases)
+
+        category = find_api_category(api_name)
+
+        category_entries_train[category].extend(train_cases)
+        category_entries_test[category].extend(test_cases)
+
+    # Write concatenated entries to new JSON files in the output directory
+    for api_name, entries in tdqm(api_entries_train.items()):
+        output_file = os.path.join(dir_path, 'api_family/', f'{api_name}_train.json')
+        with open(output_file, 'w') as f:
+            json.dump(entries, f, indent=4)
+
+    # Write concatenated entries to new JSON files in the output directory
+    for api_name, entries in tdqm(api_entries_test.items()):
+        output_file = os.path.join(dir_path, 'api_family/', f'{api_name}_test.json')
+        with open(output_file, 'w') as f:
+            json.dump(entries, f, indent=4)
+
+    # Write concatenated entries to new JSON files in the output directory
+    for category_name, entries in tdqm(category_entries_train.items()):
+        output_file = os.path.join(dir_path, 'category/', f'{category_name}_train.json')
+        with open(output_file, 'w') as f:
+            json.dump(entries, f, indent=4)
+
+    # Write concatenated entries to new JSON files in the output directory
+    for category_name, entries in tdqm(category_entries_test.items()):
+        output_file = os.path.join(dir_path, 'category/', f'{category_name}_test.json')
+        with open(output_file, 'w') as f:
+            json.dump(entries, f, indent=4)
