@@ -24,11 +24,11 @@ fi
 
 # Determine the DATA_PATH based on CATEGORY flag
 if [[ $CATEGORY == true ]]; then
-  DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/category/${API_NAME}.json"
+  DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/category/${API_NAME}_train.json"
 elif [[ $API_NAME == *"_for_"* ]]; then
-  DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/endpoint/${API_NAME}.json"
+  DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/endpoint/${API_NAME}_train.json"
 else
-  DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/api_family/${API_NAME}.json"
+  DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/api_family/${API_NAME}_train.json"
 fi
 
 EXP_NAME="output_pathes/${API_NAME}/"
