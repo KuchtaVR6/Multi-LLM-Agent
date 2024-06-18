@@ -1,6 +1,7 @@
 import json
 import argparse
 import os
+import random
 from collections import defaultdict
 from utils.prompt_lib import prompt_dict
 
@@ -9,12 +10,12 @@ parser.add_argument('--input_path', type=str, default="")
 parser.add_argument('--output_path', type=str, default='')
 parser.add_argument('--prompt_type', type=str)
 
-
 args = parser.parse_args()
 
 prompt_temp = prompt_dict[args.prompt_type]
 
 print("####################### PREPRO CALLER DATA #####################")
+
 
 def str2bool(text):
     if text.lower() in ['true', 't', '1']:
@@ -25,7 +26,7 @@ def str2bool(text):
 
 def nested_load_data(data_path):
     if os.path.isdir(data_path):
-        data =[]
+        data = []
         for f in os.listdir(data_path):
             temp_train = nested_load_data(os.path.join(data_path, f))
             data += temp_train
@@ -38,7 +39,7 @@ def nested_load_data(data_path):
 
 
 data_paths = args.input_path.split(',')
-data= []
+data = []
 for p in data_paths:
     train_temp = nested_load_data(p)
     data += train_temp
@@ -130,40 +131,35 @@ for d in data:
         elif utter['from'] == 'conclusion':
             history += ('conclusion: ' + utter['value'] + '</s>')
 
-with open(args.output_path + 'api_report.txt', 'w', encoding='utf-8') as f:
-    f.write('tool_utterances,tool_choice_ambiguous,tool_not_found,one_tool,planner_caller_mismatch\n')
-    f.write(f'{tool_utterance},{thought_ambiguous},{thought_not_usable},{tool_utterance - thought_not_usable},'
-            f'{planner_caller_mismatch}\n')
-    f.write('='*5+' CERTAIN APIS '+'='*5+'\n')
-    f.write('api_name,count\n')
-    # Sort the dictionary by count in descending order
-    sorted_api_counts = sorted(api_counts_certain.items(), key=lambda item: len(item[1]), reverse=True)
-    # Print the results line by line
-    for api, cases in sorted_api_counts:
-        f.write(f'{api}, {len(cases)}\n')
-    f.write('='*5+' ALL APIS '+'='*5+'\n')
-    f.write('api_name,count\n')
-    # Sort the dictionary by count in descending order
-    sorted_api_counts = sorted(api_counts_all.items(), key=lambda item: len(item[1]), reverse=True)
-    # Print the results line by line
-    for api, cases in sorted_api_counts:
-        f.write(f'{api}, {len(cases)}\n')
-
-
-all_apis_path = os.path.dirname(args.output_path+'all/')
+all_apis_path = os.path.dirname(args.output_path + 'all/')
 
 if not os.path.exists(all_apis_path):
     os.makedirs(all_apis_path)
-
-for api, cases in api_counts_all.items():
-    with open(all_apis_path + f'/{api}.json', 'w', encoding='utf-8') as file:
-        json.dump(cases, file, indent=2)
 
 certain_apis_path = os.path.dirname(args.output_path + 'certain/')
 
 if not os.path.exists(certain_apis_path):
     os.makedirs(certain_apis_path)
 
-for api, cases in api_counts_certain.items():
-    with open(certain_apis_path + f'/{api}.json', 'w', encoding='utf-8') as file:
-        json.dump(cases, file, indent=2)
+
+# Function to split the data
+def split_data(data, test_size=0.1):
+    """Splits data into train and test sets."""
+    random.shuffle(data)
+    split_index = int(len(data) * (1 - test_size))
+    return data[:split_index], data[split_index:]
+
+
+for api_count_type, dir_path in [[api_counts_certain, all_apis_path], [api_counts_all, certain_apis_path]]:
+    for api, cases in api_count_type.items():
+        train_cases, test_cases = split_data(cases)
+
+        # Save train cases
+        train_file_path = os.path.join(dir_path, f'{api}_train.json')
+        with open(train_file_path, 'w', encoding='utf-8') as file:
+            json.dump(train_cases, file, indent=2)
+
+        # Save test cases
+        test_file_path = os.path.join(dir_path, f'{api}_test.json')
+        with open(test_file_path, 'w', encoding='utf-8') as file:
+            json.dump(test_cases, file, indent=2)
