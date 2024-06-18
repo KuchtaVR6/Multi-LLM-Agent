@@ -221,25 +221,25 @@ for api_count_type, dir_path in [[api_counts_certain, all_apis_path], [api_count
         category_entries_test[category].extend(test_cases)
 
     # Write concatenated entries to new JSON files in the output directory
-    for api_name, entries in tdqm(api_entries_train.items()):
+    for api_name, entries in tqdm(api_entries_train.items()):
         output_file = os.path.join(dir_path, 'api_family/', f'{api_name}_train.json')
         with open(output_file, 'w') as f:
             json.dump(entries, f, indent=4)
 
     # Write concatenated entries to new JSON files in the output directory
-    for api_name, entries in tdqm(api_entries_test.items()):
+    for api_name, entries in tqdm(api_entries_test.items()):
         output_file = os.path.join(dir_path, 'api_family/', f'{api_name}_test.json')
         with open(output_file, 'w') as f:
             json.dump(entries, f, indent=4)
 
     # Write concatenated entries to new JSON files in the output directory
-    for category_name, entries in tdqm(category_entries_train.items()):
+    for category_name, entries in tqdm(category_entries_train.items()):
         output_file = os.path.join(dir_path, 'category/', f'{category_name}_train.json')
         with open(output_file, 'w') as f:
             json.dump(entries, f, indent=4)
 
     # Write concatenated entries to new JSON files in the output directory
-    for category_name, entries in tdqm(category_entries_test.items()):
+    for category_name, entries in tqdm(category_entries_test.items()):
         output_file = os.path.join(dir_path, 'category/', f'{category_name}_test.json')
         with open(output_file, 'w') as f:
             json.dump(entries, f, indent=4)
