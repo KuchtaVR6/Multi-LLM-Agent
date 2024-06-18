@@ -6,6 +6,8 @@ cd GLPFT
 API_NAME=$1
 MODEL=${2:-caller}  # Default value of MODEL is 'caller' if not provided
 FILENAME="../inner_scripts/${3:-job}_api"  # Default value of FILENAME is 'job' if not provided
+ALL_APIS=${4:-false}  # Certain or all by default its certain cases
+CATEGORY=${5:-false}  # Default value of CATEGORY is false if not provided
 
 # Default settings
 USE_LORA=true
@@ -14,10 +16,19 @@ GA=$((8 / BSZ))   # Ensure BSZ * GA = 8
 
 CONTEXT_LENGTH=4096
 
-if [[ $API_NAME == *"_for_"* ]]; then
-  DATA_PATH="dataset/toolbench/train_separated/certain/${API_NAME}.json"
+if [[ $ALL_APIS == true ]]; then
+  CERTAINTY="all"
 else
-  DATA_PATH="dataset/toolbench/train_per_api/${API_NAME}.json"
+  CERTAINTY="certain"
+fi
+
+# Determine the DATA_PATH based on CATEGORY flag
+if [[ $CATEGORY == true ]]; then
+  DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/category/${API_NAME}.json"
+elif [[ $API_NAME == *"_for_"* ]]; then
+  DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/endpoint/${API_NAME}.json"
+else
+  DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/api_family/${API_NAME}.json"
 fi
 
 EXP_NAME="output_pathes/${API_NAME}/"
@@ -28,18 +39,18 @@ if [[ $MODEL == "dev" ]]; then
     CONTEXT_LENGTH=2048
     TARGET_MODULES="query_key_value"
     FILENAME="../inner_scripts/${API_NAME}_dev_api"
-    EXP_NAME="output_pathes/${API_NAME}_dev/"
+    EXP_NAME="output_patches/${API_NAME}_dev/"
 elif [[ $MODEL == "backbone" ]]; then
     INPUT_MODEL="saved_models/backbone"
-    EXP_NAME="output_pathes/${API_NAME}_backbone/"
+    EXP_NAME="output_patches/${API_NAME}_backbone/"
     FILENAME="../inner_scripts/${API_NAME}_backbone_api"
 elif [[ $MODEL == "llama" ]]; then
     INPUT_MODEL="meta-llama/Llama-2-7b-hf"
     FILENAME="../inner_scripts/${API_NAME}_llama_api"
-    EXP_NAME="output_pathes/${API_NAME}_llama/"
+    EXP_NAME="output_patches/${API_NAME}_llama/"
 else
     INPUT_MODEL="shenwzh3/alpha-umi-caller-7b"
-    EXP_NAME="output_pathes/${API_NAME}/"
+    EXP_NAME="output_patches/${API_NAME}/"
     FILENAME="../inner_scripts/${API_NAME}_api"
 fi
 
