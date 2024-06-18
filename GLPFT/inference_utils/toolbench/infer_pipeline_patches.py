@@ -218,13 +218,18 @@ def parse_patch_name(name):
             'endpoint': None,
         }, 'category'
     if '_for_' in name:
-        endpoint, api_family = name.split('_for_')
+        endpoint, api_family = name.rsplit('_for_', 1)
         patch_type = 'endpoint'
     else:
         endpoint = None
         api_family = name
         patch_type = 'api_family'
-    category = api_categories[api_family]
+
+    if api_family in api_categories:
+        category = api_categories[api_family]
+    else:
+        category = 'Category not found'
+
     return {
         'category': category,
         'api_family': api_family,
@@ -241,6 +246,8 @@ def categorize_patches(patches_available):
 
 
 def find_valid_patches(tool_name, categorized_patches):
+    if tool_name == '[AMBIGUOUS]' or tool_name == None:
+        return []
     valid_patches = []
     hierarchy, _ = parse_patch_name(tool_name)
     if hierarchy['category'] in categorized_patches:
@@ -256,14 +263,14 @@ def find_valid_patches(tool_name, categorized_patches):
     return valid_patches
 
 
-def transpose_dict(input_dict):
+def transpose_list_of_lists(sample_to_patches):
     transposed_dict = {}
 
-    for element, options in input_dict.items():
-        for option in options:
-            if option not in transposed_dict:
-                transposed_dict[option] = []
-            transposed_dict[option].append(element)
+    for sample, patches in sample_to_patches:
+        for patch in patches:
+            if patch not in transposed_dict:
+                transposed_dict[patch] = []
+            transposed_dict[patch].append(sample)
 
     return transposed_dict
 
@@ -277,19 +284,19 @@ def infer():
 
     categorized_patches = categorize_patches(patches_available)
 
-    with open('output_res_partial/toolbench/in_domain/inputs_for_caller.json', 'rb') as file:
+    with open('output_verbose_res/inputs_for_caller.json', 'rb') as file:
         infer_samples_caller = json.load(file)
 
     # caller inference
     if len(infer_samples_caller) != 0:
-        sample_to_patches = {}
+        sample_to_patches = []
         for sample in infer_samples_caller:
             tool_requested = sample['caller_tool_requested']
             patches = find_valid_patches(tool_requested, categorized_patches)
             if patches:
-                sample_to_patches[sample] = patches
+                sample_to_patches.append([sample, patches])
 
-        patches_to_samples = transpose_dict(sample_to_patches)
+        patches_to_samples = transpose_list_of_lists(sample_to_patches)
 
         caller_model, caller_tokenizer = load_plain_model_and_tokenizer(model_args.model_suffix, patches_available)
         data_collator = Collator(caller_tokenizer, data_args)
