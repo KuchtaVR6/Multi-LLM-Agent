@@ -154,7 +154,7 @@ def load_plain_model_and_tokenizer(model_suffix, patches_available):
     if not model_suffix:
         model_suffix = 'caller'
 
-    patches_root_directory = f'output_pathes/{model_suffix}/'
+    patches_root_directory = f'output_patches/{model_suffix}/'
 
     if model_suffix == 'llama':
         model_name_or_path = "meta-llama/Llama-2-7b-hf"
@@ -182,7 +182,7 @@ def find_all_patches(model_suffix):
     if not model_suffix:
         model_suffix = 'caller'
 
-    root_directory = f'output_pathes/{model_suffix}/'
+    root_directory = f'output_patches/{model_suffix}/'
 
     safetensors_dict = {}
 
