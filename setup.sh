@@ -1,3 +1,8 @@
+echo "Creating the enviorment"
+
+conda env create -f lean_env.yml
+conda activate lean_env
+
 cd data || exit
 
 echo "Downloading data"
