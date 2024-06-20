@@ -1,4 +1,4 @@
-echo "Creating the enviorment"
+echo "Creating the environment"
 
 conda env create -f lean_env.yml -y
 conda activate lean_env
