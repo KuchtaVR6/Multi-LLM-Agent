@@ -13,7 +13,7 @@ echo "Unzipping data"
 unzip data.zip
 rm data.zip
 mv data/* .
-rm data
+rmdir data
 
 echo "Data unzipped data"
 cd ../GLPFT/dataset/toolbench || exit
