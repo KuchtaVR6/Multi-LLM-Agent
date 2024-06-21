@@ -34,6 +34,7 @@ from peft import PeftConfig
 
 import gc
 
+from infer_pipeline import DataArguments, TrainingArguments, InferDataset, Collator
 from utils.trainer_utils import TrainerForPred
 
 
@@ -45,86 +46,7 @@ class ModelArguments:
     model_suffix: Optional[str] = field(default="")
 
 
-@dataclass
-class DataArguments:
-    data_path: str = field(
-        default=None, metadata={"help": "Path to the training data."}
-    )
-    lazy_preprocess: bool = False
-    max_input_length: int = field(
-        default=1750
-    )
-    num_infer_samples: int = field(default=-1)
-    planner_prompt_type: str = field(
-        default='v1', metadata={"help": "the prompt template"}
-    )
-    caller_prompt_type: str = field(
-        default='v1', metadata={"help": "the prompt template"}
-    )
-    summarizer_prompt_type: str = field(
-        default='v1', metadata={"help": "the prompt template"}
-    )
-
-
-@dataclass
-class TrainingArguments(transformers.TrainingArguments):
-    cache_dir: Optional[str] = field(default=None)
-    optim: str = field(default="adamw_torch")
-    model_max_length: int = field(
-        default=512,
-        metadata={
-            "help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."
-        },
-    )
-    generation_config: Optional[Union[str, Path, GenerationConfig]] = field(
-        default=None,
-        metadata={
-            "help": "Model id, file path or url pointing to a GenerationConfig json file, to use during prediction."
-        },
-    )
-
-
-class InferDataset(Dataset):
-    def __init__(self, raw_data, tokenizer: transformers.PreTrainedTokenizer, args):
-        super(InferDataset, self).__init__()
-        self.tokenizer = tokenizer
-        self.raw_data = raw_data
-        self.args = args
-
-    def __len__(self):
-        return len(self.raw_data)
-
-    def __getitem__(self, i) -> Dict[str, torch.Tensor]:
-        return self.raw_data[i]
-
-
-class Collator(object):
-    def __init__(self, tokenizer, args):
-        self.tokenizer = tokenizer
-        self.args = args
-
-    def __call__(self, features):
-        input_ids = [self.tokenizer.encode(x) for x in features]  # tokens, not pad
-        max_len = max([len(t) for t in input_ids])
-        max_len = min(self.args.max_input_length, max_len)
-        new_input_ids = []
-        for t in input_ids:
-            if len(t) > max_len:
-                new_t = t[-max_len:]
-            else:
-                new_t = [self.tokenizer.pad_token_id] * (max_len - len(t)) + t
-            new_input_ids.append(new_t)
-        input_ids = torch.LongTensor(new_input_ids)
-        attention_mask = torch.ne(input_ids, self.tokenizer.pad_token_id)
-        attention_mask = torch.zeros_like(input_ids).masked_fill(attention_mask, 1)
-        return dict(
-            input_ids=input_ids,
-            attention_mask=attention_mask
-        )
-
-
-def load_plain_model_and_tokenizer(model_suffix, patches_available):
-
+def load_model_with_adapters_and_tokenizer(model_suffix, patches_available):
     if model_suffix == 'llama':
         model_name_or_path = "meta-llama/Llama-2-7b-hf"
     elif model_suffix == 'backbone':
@@ -255,7 +177,7 @@ def prepare():
 
     categorized_patches = categorize_patches(patches_available)
 
-    caller_model, caller_tokenizer = load_plain_model_and_tokenizer(model_args.model_suffix, patches_available)
+    caller_model, caller_tokenizer = load_model_with_adapters_and_tokenizer(model_args.model_suffix, patches_available)
     data_collator = Collator(caller_tokenizer, data_args)
     caller_trainer = TrainerForPred(
         model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
