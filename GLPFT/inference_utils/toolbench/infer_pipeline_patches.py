@@ -32,19 +32,9 @@ import transformers
 from transformers.trainer_pt_utils import LabelSmoother
 from peft import PeftConfig
 
-from rouge import Rouge
 import gc
 
 from utils.trainer_utils import TrainerForPred
-
-
-def evaluate_rougel(cand_list: list, ref_list: list):
-    if len(ref_list) == 0:
-        return 0
-    rouge = Rouge()
-    rouge_score = rouge.get_scores(hyps=cand_list, refs=ref_list, avg=True)
-    rougel = rouge_score["rouge-l"]["f"]
-    return rougel
 
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
@@ -92,22 +82,6 @@ class TrainingArguments(transformers.TrainingArguments):
             "help": "Model id, file path or url pointing to a GenerationConfig json file, to use during prediction."
         },
     )
-
-
-def nested_load_test_data(data_path):
-    test_raw_data = []
-    if os.path.isdir(data_path):
-        for f in os.listdir(data_path):
-            temp_test = nested_load_test_data(os.path.join(data_path, f))
-            test_raw_data += temp_test
-        return test_raw_data
-    elif os.path.isfile(data_path) and data_path.endswith('.json'):
-        print("Load data from", data_path)
-        temp_data = json.load(open(data_path, "r"))
-        test_raw_data = temp_data
-        return test_raw_data
-    else:
-        return []
 
 
 class InferDataset(Dataset):
@@ -271,7 +245,7 @@ def transpose_list_of_lists(sample_to_patches):
 
     return transposed_dict
 
-def infer():
+def prepare():
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
     )
@@ -280,6 +254,18 @@ def infer():
     patches_available = find_all_patches(model_args.model_suffix)
 
     categorized_patches = categorize_patches(patches_available)
+
+    caller_model, caller_tokenizer = load_plain_model_and_tokenizer(model_args.model_suffix, patches_available)
+    data_collator = Collator(caller_tokenizer, data_args)
+    caller_trainer = TrainerForPred(
+        model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
+    )
+
+    return categorized_patches, caller_model, caller_tokenizer, caller_trainer, data_args, training_args
+
+
+def infer():
+    categorized_patches, caller_model, caller_tokenizer, caller_trainer, data_args, training_args = prepare()
 
     with open('output_verbose_res/inputs_for_caller.json', 'rb') as file:
         infer_samples_caller = json.load(file)
@@ -294,12 +280,6 @@ def infer():
                 sample_to_patches.append([sample, patches])
 
         patches_to_samples = transpose_list_of_lists(sample_to_patches)
-
-        caller_model, caller_tokenizer = load_plain_model_and_tokenizer(model_args.model_suffix, patches_available)
-        data_collator = Collator(caller_tokenizer, data_args)
-        caller_trainer = TrainerForPred(
-            model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
-        )
 
         for patch, samples in patches_to_samples.items():
             caller_model.set_adapter(patch)
