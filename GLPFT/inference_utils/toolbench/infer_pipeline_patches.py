@@ -151,19 +151,16 @@ class Collator(object):
 
 def load_plain_model_and_tokenizer(model_suffix, patches_available):
 
-    if not model_suffix:
-        model_suffix = 'caller'
-
-    patches_root_directory = f'output_patches/{model_suffix}/'
-
     if model_suffix == 'llama':
         model_name_or_path = "meta-llama/Llama-2-7b-hf"
     elif model_suffix == 'backbone':
         model_name_or_path = "saved_models/backbone"
+    elif model_suffix == 'dev':
+        model_name_or_path = "EleutherAI/pythia-160m"
     else:
         model_name_or_path = "saved_models/caller"
 
-    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path, use_fast=False)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_name_or_path
     )
@@ -172,8 +169,7 @@ def load_plain_model_and_tokenizer(model_suffix, patches_available):
         model.resize_token_embeddings(len(tokenizer))
 
     for patch_dir in patches_available.keys():
-        print(patch_dir)
-        current_config = PeftConfig(patches_root_directory + patch_dir)
+        current_config = PeftConfig.from_pretrained(patch_dir)
         model.add_adapter(current_config, adapter_name=patch_dir)
 
     return model, tokenizer
