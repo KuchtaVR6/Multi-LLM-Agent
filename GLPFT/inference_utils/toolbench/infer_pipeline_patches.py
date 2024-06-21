@@ -172,6 +172,7 @@ def load_plain_model_and_tokenizer(model_suffix, patches_available):
         model.resize_token_embeddings(len(tokenizer))
 
     for patch_dir in patches_available.keys():
+        print(patch_dir)
         current_config = PeftConfig(patches_root_directory + patch_dir)
         model.add_adapter(current_config, adapter_name=patch_dir)
 
