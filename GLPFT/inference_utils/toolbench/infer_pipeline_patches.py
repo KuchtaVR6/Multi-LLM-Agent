@@ -103,34 +103,45 @@ def prepare():
     return patch_manager, caller_model, caller_tokenizer, caller_trainer, data_args, training_args
 
 
+def infer_on_samples(samples, trainer, tokenizer, data_args):
+    caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in samples], tokenizer,
+                                       data_args)
+    outputs, _ = trainer.predict(caller_test_dataset)
+    for i, o in enumerate(outputs):
+        candidate = tokenizer.decode(o, skip_special_tokens=True)
+        if candidate.startswith(': '):
+            candidate = candidate[2:]
+        if candidate.strip() in ['', '.', ',']:
+            candidate = 'none'
+        samples[i]['predictions'] = "assistant: " + samples[i][
+            'planner_prediction'] + "</s>caller: " + candidate
+
+    return samples
 
 
-
-def infer():
+def infer(input_files, test_backoff=False):
     patch_manager, caller_model, caller_tokenizer, caller_trainer, data_args, training_args = prepare()
 
     collator = PatchAndSampleCollator(patch_manager)
-    collator.load_file('output_verbose_res/inputs_for_caller.json')
+    for input_file in input_files:
+        collator.load_file(input_file)
 
     for patch, api_name, samples in collator:
         caller_model.set_adapter(patch)
-        caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in samples], caller_tokenizer,
-                                           data_args)
-        outputs, _ = caller_trainer.predict(caller_test_dataset)
-        for i, o in enumerate(outputs):
-            candidate = caller_tokenizer.decode(o, skip_special_tokens=True)
-            if candidate.startswith(': '):
-                candidate = candidate[2:]
-            if candidate.strip() in ['', '.', ',']:
-                candidate = 'none'
-            samples[i]['predictions'] = "assistant: " + samples[i][
-                'planner_prediction'] + "</s>caller: " + candidate
+        samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
 
         folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
         os.makedirs(folder_path, exist_ok=True)
-                    # TODO remove repetition from the path
 
         with open(os.path.join(folder_path, 'predictions.json'), 'w') as f:
+            json.dump(samples, f, indent=4)
+
+    if test_backoff:
+        caller_model.disable_adapter_layers()
+        samples = infer_on_samples(collator.all_samples, caller_trainer, caller_tokenizer, data_args)
+        os.makedirs(training_args.output_dir, exist_ok=True)
+
+        with open(os.path.join(training_args.output_dir, 'backoff_predictions.json'), 'w') as f:
             json.dump(samples, f, indent=4)
 
     caller_model.to('cpu')
@@ -147,4 +158,4 @@ def infer():
 
 
 if __name__ == "__main__":
-    infer()
+    infer(['output_verbose_res/inputs_for_caller.json'])
