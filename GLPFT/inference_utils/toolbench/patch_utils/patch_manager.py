@@ -22,7 +22,7 @@ class PatchManager:
             raise FileNotFoundError(f"Error: The directory {root_directory} does not exist.")
 
         for dir_path, dir_names, filenames in os.walk(root_directory):
-            if 'checkpoint-1000' in dir_path or 'checkpoint-500' in dir_path:
+            if 'checkpoint-' in dir_path:
                 continue    # skip loading checkpoints
             if any(file.endswith('.safetensors') for file in filenames):
                 # Get the last folder in the chain
