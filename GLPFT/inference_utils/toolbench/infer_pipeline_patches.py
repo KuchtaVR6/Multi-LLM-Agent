@@ -108,7 +108,7 @@ def infer(input_files):
         model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
     )
 
-    collator = PatchAndSampleCollator(patch_manager)
+    collator = PatchAndSampleCollator(patch_manager, data_args.planner_prompt_type)
     for input_file in input_files:
         collator.load_file(input_file)
 
