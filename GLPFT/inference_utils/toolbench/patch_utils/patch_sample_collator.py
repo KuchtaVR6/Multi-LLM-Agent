@@ -6,13 +6,16 @@ class PatchAndSampleCollator():
     def __init__(self, patch_manager):
         self.patch_manager = patch_manager
         self.patch_to_samples = defaultdict(list)
+        self.all_samples = []
 
     def load_file(self, file_path):
         with open(file_path, 'rb') as file:
-            infer_samples_caller = json.load(file)
+            loaded_samples = json.load(file)
 
-        if len(infer_samples_caller) != 0:
-            for sample in infer_samples_caller:
+        self.all_samples.extend(loaded_samples)
+
+        if len(loaded_samples) != 0:
+            for sample in loaded_samples:
                 tool_requested = sample['caller_tool_requested']
                 patches = self.patch_manager.return_valid_patches(tool_requested)
                 for patch in patches:
