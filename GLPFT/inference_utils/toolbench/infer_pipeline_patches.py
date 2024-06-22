@@ -126,7 +126,7 @@ def infer():
             samples[i]['predictions'] = "assistant: " + samples[i][
                 'planner_prediction'] + "</s>caller: " + candidate
 
-        folder_path = os.path.join(training_args.output_dir, api_name)
+        folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
         os.makedirs(folder_path, exist_ok=True)
                     # TODO remove repetition from the path
 
