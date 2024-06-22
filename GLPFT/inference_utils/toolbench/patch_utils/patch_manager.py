@@ -22,12 +22,16 @@ class PatchManager:
             raise FileNotFoundError(f"Error: The directory {root_directory} does not exist.")
 
         for dir_path, dir_names, filenames in os.walk(root_directory):
+            if 'checkpoint-1000' in dir_path or 'checkpoint-500' in dir_path:
+                continue    # skip loading checkpoints
             if any(file.endswith('.safetensors') for file in filenames):
                 # Get the last folder in the chain
                 last_folder = os.path.basename(dir_path)
                 if self.model_suffix != 'caller':
                     last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
                 self.dir_path_to_api_name[dir_path] = last_folder
+
+
 
     def categorize_patches(self):
         for dir_path, patch_name in self.dir_path_to_api_name.items():
