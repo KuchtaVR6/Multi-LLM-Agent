@@ -13,6 +13,7 @@ class PatchManager:
         self.patch_hierarchy = defaultdict(lambda: defaultdict(lambda: defaultdict(str)))
         self.parse_api_categories()
         self.find_all_patches()
+        self.categorize_patches()
 
     def find_all_patches(self):
         root_directory = f'output_patches/{self.model_suffix}/'
@@ -27,8 +28,6 @@ class PatchManager:
                 if self.model_suffix != 'caller':
                     last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
                 self.dir_path_to_api_name[dir_path] = last_folder
-
-        return self.dir_path_to_api_name
 
     def categorize_patches(self):
         for dir_path, patch_name in self.dir_path_to_api_name.items():
