@@ -18,7 +18,6 @@
 
 
 from dataclasses import dataclass, field
-from collections import defaultdict
 import json
 from typing import Optional
 import os
@@ -26,7 +25,7 @@ import os
 import torch
 import transformers
 from transformers.trainer_pt_utils import LabelSmoother
-from peft import PeftConfig
+from peft import PeftConfig, get_peft_model
 
 import gc
 
@@ -60,9 +59,15 @@ def load_model_with_adapters_and_tokenizer(model_suffix, patch_manager):
         tokenizer.add_special_tokens({"bos_token": "<s>", "eos_token": "</s>", "pad_token": "<pad>"})
         model.resize_token_embeddings(len(tokenizer))
 
+    peftified_models = False
+
     for patch_dir in patch_manager.all_patch_paths():
         current_config = PeftConfig.from_pretrained(patch_dir)
-        model.add_adapter(current_config, adapter_name=patch_dir)
+        if not peftified_models:
+            model = get_peft_model(model, current_config, adapter_name=patch_dir)
+            peftified_models = True
+        else:
+            model.add_adapter(patch_dir, current_config)
 
     return model, tokenizer
 
