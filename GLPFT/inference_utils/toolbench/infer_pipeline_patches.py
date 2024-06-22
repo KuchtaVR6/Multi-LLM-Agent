@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 import json
 from typing import Optional
 import os
+from tqdm import tqdm
 
 import torch
 import transformers
@@ -61,7 +62,7 @@ def load_model_with_adapters_and_tokenizer(model_suffix, patch_manager):
 
     peftified_models = False
 
-    for patch_dir in patch_manager.all_patch_paths():
+    for patch_dir in tqdm(patch_manager.all_patch_paths()):
         current_config = PeftConfig.from_pretrained(patch_dir)
         if not peftified_models:
             model = get_peft_model(model, current_config, adapter_name=patch_dir)
@@ -130,6 +131,8 @@ def infer():
                     candidate = 'none'
                 samples[i]['predictions'] = "asssitant: " + samples[i][
                     'planner_prediction'] + "</s>caller: " + candidate
+
+            os.makedirs(os.path.join(training_args.output_dir, patch), exist_ok=True)
 
             with open(os.path.join(training_args.output_dir, patch, 'predictions.json'), 'w') as f:
                 json.dump(samples, f, indent=4)
