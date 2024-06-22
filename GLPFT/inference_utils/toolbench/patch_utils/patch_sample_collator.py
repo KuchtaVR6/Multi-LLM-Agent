@@ -1,4 +1,5 @@
 import json
+import os.path
 from collections import defaultdict
 
 
@@ -7,6 +8,20 @@ class PatchAndSampleCollator():
         self.patch_manager = patch_manager
         self.patch_to_samples = defaultdict(list)
         self.all_samples = []
+
+    def load_specific_test_sets(self, specific_test_type='certain'):
+        specific_test_sets = []
+        folder_path = f'dataset/toolbench/new_data/'
+        for expert_path in self.patch_manager.all_patch_paths():
+            expert_name = self.patch_manager.dir_path_to_api_name[expert_path]
+            _, expert_type = self.patch_manager.parse_patch_name(expert_name)
+            specified_folder_path = f'{specific_test_type}/{expert_type}/'
+            filename = f'{expert_name}_test.json'
+            full_path = os.path.join(folder_path, specified_folder_path, filename)
+            with open(full_path, 'rb') as file:
+                loaded_samples = json.load(file)
+            specific_test_sets.append([expert_path, expert_type, loaded_samples])
+        return specific_test_sets
 
     def load_file(self, file_path):
         with open(file_path, 'rb') as file:
