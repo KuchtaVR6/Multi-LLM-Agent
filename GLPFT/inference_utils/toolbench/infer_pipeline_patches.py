@@ -39,8 +39,12 @@ IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
 
 @dataclass
-class ModelArguments:
+class TestArguments:
     model_suffix: Optional[str] = field(default="")
+    regular_test_set: Optional[bool] = field(default=True)
+    test_backoff: Optional[bool] = field(default=False)
+    do_specific_tests: Optional[bool] = field(default=False)
+    specific_test_sets: Optional[str] = field(default="certain")
 
 
 def load_model_with_adapters_and_tokenizer(model_suffix, patch_manager):
@@ -74,35 +78,6 @@ def load_model_with_adapters_and_tokenizer(model_suffix, patch_manager):
     return model, tokenizer
 
 
-def transpose_list_of_lists(sample_to_patches):
-    transposed_dict = {}
-
-    for sample, patches in sample_to_patches:
-        for patch in patches:
-            if patch not in transposed_dict:
-                transposed_dict[patch] = []
-            transposed_dict[patch].append(sample)
-
-    return transposed_dict
-
-
-def prepare():
-    parser = transformers.HfArgumentParser(
-        (ModelArguments, DataArguments, TrainingArguments)
-    )
-    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-
-    patch_manager = PatchManager(model_args.model_suffix)
-
-    caller_model, caller_tokenizer = load_model_with_adapters_and_tokenizer(model_args.model_suffix, patch_manager)
-    data_collator = Collator(caller_tokenizer, data_args)
-    caller_trainer = TrainerForPred(
-        model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
-    )
-
-    return patch_manager, caller_model, caller_tokenizer, caller_trainer, data_args, training_args
-
-
 def infer_on_samples(samples, trainer, tokenizer, data_args):
     caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in samples], tokenizer,
                                        data_args)
@@ -119,30 +94,68 @@ def infer_on_samples(samples, trainer, tokenizer, data_args):
     return samples
 
 
-def infer(input_files, test_backoff=False):
-    patch_manager, caller_model, caller_tokenizer, caller_trainer, data_args, training_args = prepare()
+def infer(input_files):
+    parser = transformers.HfArgumentParser(
+        (TestArguments, DataArguments, TrainingArguments)
+    )
+    test_args, data_args, training_args = parser.parse_args_into_dataclasses()
+
+    patch_manager = PatchManager(test_args.model_suffix)
+
+    caller_model, caller_tokenizer = load_model_with_adapters_and_tokenizer(test_args.model_suffix, patch_manager)
+    data_collator = Collator(caller_tokenizer, data_args)
+    caller_trainer = TrainerForPred(
+        model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
+    )
 
     collator = PatchAndSampleCollator(patch_manager)
     for input_file in input_files:
         collator.load_file(input_file)
 
-    for patch, api_name, samples in collator:
-        caller_model.set_adapter(patch)
-        samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
+    if test_args.regular_test_set:
+        print('Predicting the ToolBench Test set...')
+        for patch, api_name, samples in collator:
+            caller_model.set_adapter(patch)
+            samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
 
-        folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
-        os.makedirs(folder_path, exist_ok=True)
+            folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
+            os.makedirs(folder_path, exist_ok=True)
 
-        with open(os.path.join(folder_path, 'predictions.json'), 'w') as f:
-            json.dump(samples, f, indent=4)
+            with open(os.path.join(folder_path, 'predictions.json'), 'w') as f:
+                json.dump(samples, f, indent=4)
 
-    if test_backoff:
+    if test_args.do_specific_tests:
+        print('Predicting the Expert Specific Test sets...')
+        for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
+            caller_model.set_adapter(patch)
+            samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
+
+            folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
+            os.makedirs(folder_path, exist_ok=True)
+
+            with open(os.path.join(folder_path, f'predictions_{test_args.specific_test_sets}'), 'w') as f:
+                json.dump(samples, f, indent=4)
+
+
+    if test_args.test_backoff:
+        print('Predicting the Toolbench Test sets on backoff...')
         caller_model.disable_adapter_layers()
         samples = infer_on_samples(collator.all_samples, caller_trainer, caller_tokenizer, data_args)
         os.makedirs(training_args.output_dir, exist_ok=True)
 
         with open(os.path.join(training_args.output_dir, 'backoff_predictions.json'), 'w') as f:
             json.dump(samples, f, indent=4)
+
+        if test_args.do_specific_tests:
+            print('Predicting the Expert Specific Test sets on backoff...')
+            for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
+                samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
+
+                folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
+                os.makedirs(folder_path, exist_ok=True)
+                with open(os.path.join(folder_path, f'predictions_{test_args.specific_test_sets}'), 'w') as f:
+                    json.dump(samples, f, indent=4)
+
 
     caller_model.to('cpu')
     caller_trainer.model.to('cpu')
