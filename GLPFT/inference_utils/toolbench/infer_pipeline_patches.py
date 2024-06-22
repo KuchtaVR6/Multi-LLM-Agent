@@ -32,10 +32,11 @@ import gc
 
 from infer_pipeline import DataArguments, TrainingArguments, InferDataset, Collator
 from patch_utils.patch_manager import PatchManager
+from patch_utils.patch_sample_collator import PatchAndSampleCollator
 from utils.trainer_utils import TrainerForPred
 
-
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
+
 
 @dataclass
 class ModelArguments:
@@ -84,6 +85,7 @@ def transpose_list_of_lists(sample_to_patches):
 
     return transposed_dict
 
+
 def prepare():
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
@@ -101,53 +103,47 @@ def prepare():
     return patch_manager, caller_model, caller_tokenizer, caller_trainer, data_args, training_args
 
 
+
+
+
 def infer():
     patch_manager, caller_model, caller_tokenizer, caller_trainer, data_args, training_args = prepare()
 
-    with open('output_verbose_res/inputs_for_caller.json', 'rb') as file:
-        infer_samples_caller = json.load(file)
+    collator = PatchAndSampleCollator(patch_manager)
+    collator.load_file('output_verbose_res/inputs_for_caller.json')
 
-    # caller inference
-    if len(infer_samples_caller) != 0:
-        sample_to_patches = []
-        for sample in infer_samples_caller:
-            tool_requested = sample['caller_tool_requested']
-            patches = patch_manager.return_valid_patches(tool_requested)
-            if patches:
-                sample_to_patches.append([sample, patches])
+    for patch, api_name, samples in collator:
+        caller_model.set_adapter(patch)
+        caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in samples], caller_tokenizer,
+                                           data_args)
+        outputs, _ = caller_trainer.predict(caller_test_dataset)
+        for i, o in enumerate(outputs):
+            candidate = caller_tokenizer.decode(o, skip_special_tokens=True)
+            if candidate.startswith(': '):
+                candidate = candidate[2:]
+            if candidate.strip() in ['', '.', ',']:
+                candidate = 'none'
+            samples[i]['predictions'] = "assistant: " + samples[i][
+                'planner_prediction'] + "</s>caller: " + candidate
 
-        patches_to_samples = transpose_list_of_lists(sample_to_patches)
+        folder_path = os.path.join(training_args.output_dir, api_name)
+        os.makedirs(folder_path, exist_ok=True)
+                    # TODO remove repetition from the path
 
-        for patch, samples in patches_to_samples.items():
-            caller_model.set_adapter(patch)
-            caller_test_dataset = InferDataset([d['model_input_for_caller'] for d in samples], caller_tokenizer,
-                                               data_args)
-            outputs, _ = caller_trainer.predict(caller_test_dataset)
-            for i, o in enumerate(outputs):
-                candidate = caller_tokenizer.decode(o, skip_special_tokens=True)
-                if candidate.startswith(': '):
-                    candidate = candidate[2:]
-                if candidate.strip() in ['', '.', ',']:
-                    candidate = 'none'
-                samples[i]['predictions'] = "asssitant: " + samples[i][
-                    'planner_prediction'] + "</s>caller: " + candidate
+        with open(os.path.join(folder_path, 'predictions.json'), 'w') as f:
+            json.dump(samples, f, indent=4)
 
-            os.makedirs(os.path.join(training_args.output_dir, patch), exist_ok=True)
+    caller_model.to('cpu')
+    caller_trainer.model.to('cpu')
+    caller_trainer.model_wrapped.to('cpu')
+    del caller_model
+    del caller_tokenizer
+    del caller_trainer.model
+    del caller_trainer.model_wrapped
+    del caller_trainer
+    gc.collect()
 
-            with open(os.path.join(training_args.output_dir, patch, 'predictions.json'), 'w') as f:
-                json.dump(samples, f, indent=4)
-
-        caller_model.to('cpu')
-        caller_trainer.model.to('cpu')
-        caller_trainer.model_wrapped.to('cpu')
-        del caller_model
-        del caller_tokenizer
-        del caller_trainer.model
-        del caller_trainer.model_wrapped
-        del caller_trainer
-        gc.collect()
-
-        torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
