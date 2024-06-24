@@ -20,3 +20,4 @@ assets/.DS_Store
 
 /**/*_scrape.py
 /GLPFT/output_verbose_res/
+/GLPFT/classification_fail_log.json

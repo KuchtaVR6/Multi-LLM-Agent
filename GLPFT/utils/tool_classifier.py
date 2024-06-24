@@ -13,7 +13,7 @@ def remove_negations(text, hard=False):
 
 
 with open('classification_fail_log.json', 'w') as file:
-    file.write('')
+    file.write('[')
 
 
 class ToolClassifier:
@@ -114,5 +114,5 @@ class ToolClassifier:
                             'original': plan,
                             'edited': remove_negations(plan, hard=True)
                         }, file, indent=4)
-                        file.write("\n")
+                        file.write(",\n")
         return None
