@@ -2,30 +2,6 @@ import re
 import json
 from datetime import datetime
 
-# def evaluate_reasoning(reasoning, expected_api, apis):
-#     number_of_apis_mentioned = 0
-#     for api in apis:
-#         if api in reasoning:
-#             number_of_apis_mentioned += 1
-#
-#     if expected_api:
-#         correct_api_mentioned = expected_api in reasoning
-#         if correct_api_mentioned:
-#             if number_of_apis_mentioned == 1:
-#                 return 'correct'
-#             else:
-#                 return 'ambiguous'
-#         else:
-#             if number_of_apis_mentioned == 0:
-#                 return 'no_apis'
-#             else:
-#                 return 'wrong_apis'
-#     else:
-#         if number_of_apis_mentioned == 0:
-#             return 'partially_correct_no_mention'
-#         else:
-#             return 'apis_present_but_not_expected'
-
 
 def remove_negations(text, hard=False):
     for negation in ToolClassifier.negations:
@@ -34,6 +10,10 @@ def remove_negations(text, hard=False):
         for negation in ToolClassifier.likely_negations:
             text = re.sub(negation, '[likely negated]', text, flags=re.IGNORECASE)
     return text
+
+
+with open('classification_fail_log.json', 'w') as file:
+    file.write('')
 
 
 class ToolClassifier:
@@ -127,5 +107,12 @@ class ToolClassifier:
                 hard_removed = self.simple_tool_string_lookup(remove_negations(plan, hard=True))
                 if len(hard_removed) == 1:
                     return hard_removed[0]
+                elif len(hard_removed) > 0:
+                    with open('classification_fail_log.json', 'a') as file:
+                        json.dump({
+                            'hard_removed': hard_removed,
+                            'original': plan,
+                            'edited': remove_negations(plan, hard=True)
+                        }, file, indent=4)
+                        file.write("\n")
         return None
-
