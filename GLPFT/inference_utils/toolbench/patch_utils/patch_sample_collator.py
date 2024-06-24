@@ -24,7 +24,7 @@ class PatchAndSampleCollator():
             with open(full_path, 'rb') as file:
                 loaded_samples = json.load(file)
             processed = build_caller_infer_samples(loaded_samples, self.planner_prompt_type)
-            specific_test_sets.append([expert_path, f'{expert_type}/{expert_type}', processed])
+            specific_test_sets.append([expert_path, f'{expert_type}/{expert_name}', processed])
         return specific_test_sets
 
     def load_file(self, file_path):
