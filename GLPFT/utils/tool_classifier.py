@@ -17,6 +17,11 @@ with open('classification_fail_log.json', 'w') as file:
 
 class ToolClassifier:
     negations = [
+        r' the [^ ]+? function is currently not valid ',
+        r' the [^ ]+? function is not currently available ',
+        r' that the [^ ]+? function did not provide ',
+        r' unfortunately the [^ ]+? function encountered an error ',
+        r' attempt to use the [^ ]+? function did not provide ',
         r' is not the [^ ]+? ',
         r' the [^ ]+? returned an error',
         r' the [^ ]+? function also failed',
@@ -29,39 +34,46 @@ class ToolClassifier:
         r' an issue with the functionality of the [^ ]+? function',
         r'Instead of calling the function [^ ]+?, ',
         r' function [^ ]+? is not valid ',
-        r' the [^ ]+? function, I\'ll now call the ',
-        r' the [^ ]+? function, I decided to call the',
-        r'Based on the response from the [^ ]+? function',
-        r'the [^ ]+? function. The response returned an empty object.',
+        r' the [^ ]+? function i\'ll now call the ',
+        r' the [^ ]+? function i decided to call the',
+        r'based on the response from the [^ ]+? function',
+        r'the [^ ]+? function. The response returned an empty object',
         r'the [^ ]+? function resulted in an error',
         r'function [^ ]+? is currently unavailable',
         r'the [^ ]+? and [^ ]+? functions are currently unavailable',
         r' instead of [^ ]+? ',
         r' [^ ]+? failed',
         r' [^ ]+? was unsuccessful',
-        r' while trying to call the [^ ]+? function'
+        r' while trying to call the [^ ]+? function',
+        r' the [^ ]+? function is not',
     ]
 
     likely_negations = [
+        r' the [^ ]+? api was called ',
+        r' the [^ ]+? function returned a response ',
+        r' the [^ ]+? function was called ',
         r' attempted to use [^ ]+? function ',
         r' attempted to use the [^ ]+? function ',
         r' tried to use the [^ ]+? ',
         r' it seems that the function [^ ]+? ',
         r' it seems that the [^ ]+? function ',
         r' initially called the [^ ]+? ',
-        r'Additionally, I will call the function [^ ]+? ',
-        r'Additionally, I can use the function [^ ]+? ',
-        r'Furthermore, by calling the function [^ ]+? ',
-        r'[23456789]. Use the function [^ ]+? ',
-        r'[23456789]. Call the [^ ]+? function ',
+        r'additionally I will call the function [^ ]+? ',
+        r'additionally I can use the function [^ ]+? ',
+        r'furthermore by calling the function [^ ]+? ',
+        r'[23456789] use the function [^ ]+? ',
+        r'[23456789] call the [^ ]+? function ',
         r' called the API function [^ ]+? ',
         r' called the [^ ]+? ',
         r' called the [^ ]+? function',
         r' has been called with the function [^ ]+? ',
         r' and then use the function [^ ]+? to ',
         r' previous API call to [^ ]+? ',
+        r'the [^ ]+? function returned',
         r'the [^ ]+? function resulted',
         r' retrieved using the [^ ]+? function',
+        r' on the previous action the [^ ]+? function ',
+        r' the [^ ]+? function was called with '
     ]
 
     terminal_symbols = ['`', "'", '"', ' ']
@@ -89,7 +101,7 @@ class ToolClassifier:
                     tools_matched.add(tool)
         return list(tools_matched)
 
-    def simple_tool_string_lookup(self, text):  # baseline and the pre 2406 approach
+    def simple_tool_string_lookup(self, text):
         tools_matched = set()
         for tool in self.string_matching_tools.keys():
             if tool in text:
@@ -97,6 +109,7 @@ class ToolClassifier:
         return list(tools_matched)
 
     def feed_plan(self, plan):
+        plan = re.sub(r'[^\w\s_\[\]\"\'`]', '', plan).lower()
         self.encountered = self.simple_tool_string_lookup(remove_negations(plan))
 
         if len(self.encountered) == 1:

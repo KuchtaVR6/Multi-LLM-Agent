@@ -10,7 +10,7 @@ boundary_limit = 3
 context = defaultdict(int)
 
 for entry in entries:
-    text = re.sub(r'[^\w\s_]', '', entry['edited']).lower()
+    text = re.sub(r'[^\w\s_\[\]\"\'`]', '', entry['edited']).lower()
     text_split = text.split(' ')
     for api in entry['hard_removed']:
         try:
@@ -29,5 +29,5 @@ sorted_context = sorted(context.items(), key=itemgetter(1), reverse=True)
 # Print sorted dictionaries
 print("Context:")
 for context, count in sorted_context:
-    if count > 5:
+    if count >= 5:
         print(f"{context}: {count}")
