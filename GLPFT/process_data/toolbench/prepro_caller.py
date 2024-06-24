@@ -97,7 +97,7 @@ for d in tqdm(data):
                 thought = d['conversations'][i - 1]['value']  # Get the previous utterance's value
 
                 # Replace placeholders in the query template with history and thought
-                input = query_temp.replace('{history}', history).replace('{thought}', thought)
+                model_input = query_temp.replace('{history}', history).replace('{thought}', thought)
 
                 mentioned_tool = None
                 for tool_name in tool_list:
@@ -114,7 +114,7 @@ for d in tqdm(data):
                 utterance = {
                     'tools': d['tools'],
                     'history': d['conversations'][:i],
-                    'input': input + " caller: ",
+                    'input': model_input + " caller: ",
                     'target': utter['value']
                 }
 
