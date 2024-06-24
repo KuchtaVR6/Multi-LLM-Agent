@@ -63,7 +63,7 @@ api_counts_certain = defaultdict(list)
 api_counts_all = defaultdict(list)
 
 # Loop through each item in the 'data' list
-for d in data: # todo tqdm(data):
+for d in tqdm(data):
     tool_docs = ""  # Initialize an empty string to hold the tool documentation
 
     # Loop through each tool in the current data item
