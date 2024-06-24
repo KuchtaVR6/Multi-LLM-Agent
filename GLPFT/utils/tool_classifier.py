@@ -109,6 +109,17 @@ class ToolClassifier:
                     tools_matched.add(tool)
         return list(tools_matched)
 
+    def simple_tool_string_lookup(self, text):  # baseline and the pre 2406 approach
+        tools_matched = set()
+        for tool in self.string_matching_tools.keys():
+            if tool in text:
+                tools_matched.add(tool)
+        tools_found = list(tools_matched)
+        if len(tools_found) == 1:
+            return tools_found[0]
+        else:
+            return None
+
     def feed_plan(self, plan):
         self.encountered = self.tool_string_lookup(remove_negations(plan))
 
