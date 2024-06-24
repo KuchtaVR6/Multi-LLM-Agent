@@ -63,7 +63,7 @@ api_counts_certain = defaultdict(list)
 api_counts_all = defaultdict(list)
 
 # Loop through each item in the 'data' list
-for d in tqdm(data):
+for d in data: # todo tqdm(data):
     tool_docs = ""  # Initialize an empty string to hold the tool documentation
 
     # Loop through each tool in the current data item
@@ -101,7 +101,7 @@ for d in tqdm(data):
                 # Replace placeholders in the query template with history and thought
                 input = query_temp.replace('{history}', history).replace('{thought}', thought)
 
-                tool_classifier = ToolClassifier(tool_list, verbose=True)
+                tool_classifier = ToolClassifier(tool_list)
                 mentioned_tool = tool_classifier.feed_plan(thought)
 
                 tool_used_after = utter['value'].split('\n')[0].split(' ')[1]
@@ -129,6 +129,9 @@ for d in tqdm(data):
                 history += ('caller: ' + utter['value'] + '</s>')
         elif utter['from'] == 'conclusion':
             history += ('conclusion: ' + utter['value'] + '</s>')
+
+print(tool_utterance, thought_not_usable, planner_caller_mismatch)
+exit()
 
 all_apis_path = os.path.dirname(args.output_path + 'all/')
 
