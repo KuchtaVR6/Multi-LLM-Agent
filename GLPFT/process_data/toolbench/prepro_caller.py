@@ -9,6 +9,8 @@ import string
 import re
 from utils.prompt_lib import prompt_dict
 
+from utils.tool_classifier import ToolClassifier
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_path', type=str, default="")
 parser.add_argument('--output_path', type=str, default='')
@@ -99,15 +101,8 @@ for d in tqdm(data):
                 # Replace placeholders in the query template with history and thought
                 input = query_temp.replace('{history}', history).replace('{thought}', thought)
 
-                mentioned_tool = None
-                for tool_name in tool_list:
-                    if tool_name in thought:
-                        if mentioned_tool:
-                            thought_ambiguous += 1
-                            mentioned_tool = None
-                            break
-                        else:
-                            mentioned_tool = tool_name
+                tool_classifier = ToolClassifier(tool_list, verbose=True)
+                mentioned_tool = tool_classifier.feed_plan(thought)
 
                 tool_used_after = utter['value'].split('\n')[0].split(' ')[1]
 
