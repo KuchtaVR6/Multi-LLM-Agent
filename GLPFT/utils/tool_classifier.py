@@ -1,6 +1,5 @@
 import re
 import json
-from datetime import datetime
 
 
 def remove_negations(text, hard=False):
