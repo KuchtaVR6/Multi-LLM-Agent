@@ -118,6 +118,9 @@ for d in tqdm(data):
                     'target': utter['value']
                 }
 
+                # Append the caller's utterance to the history
+                history += ('caller: ' + utter['value'] + '</s>')
+
                 api_counts_all[tool_used_after].append(utterance)
 
                 if not mentioned_tool:
@@ -130,8 +133,6 @@ for d in tqdm(data):
 
                 api_counts_certain[mentioned_tool].append(utterance)
 
-                # Append the caller's utterance to the history
-                history += ('caller: ' + utter['value'] + '</s>')
         elif utter['from'] == 'conclusion':
             history += ('conclusion: ' + utter['value'] + '</s>')
 
