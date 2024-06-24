@@ -110,7 +110,8 @@ for d in tqdm(data):
                     'tools': d['tools'],
                     'history': d['conversations'][:i],
                     'input': input + " caller: ",
-                    'target': utter['value']
+                    'target': utter['value'],
+                    'caller_tool_requested': mentioned_tool
                 }
 
                 api_counts_all[tool_used_after].append(utterance)

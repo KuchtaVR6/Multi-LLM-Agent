@@ -32,7 +32,7 @@ class ToolClassifier:
         r' an error executing the [^ ]+? ',
         r' the [^ ]+? function is not working',
         r' an issue with the functionality of the [^ ]+? function',
-        r'Instead of calling the function [^ ]+?, ',
+        r'instead of calling the function [^ ]+?, ',
         r' function [^ ]+? is not valid ',
         r' the [^ ]+? function i\'ll now call the ',
         r' the [^ ]+? function i decided to call the',
