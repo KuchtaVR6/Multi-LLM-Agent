@@ -44,6 +44,7 @@ class TestArguments:
     regular_test_set: Optional[bool] = field(default=True)
     test_backoff: Optional[bool] = field(default=False)
     do_specific_tests: Optional[bool] = field(default=False)
+    do_specific_tests_backoff: Optional[bool] = field(default=True)
     specific_test_sets: Optional[str] = field(default="certain")
 
 
@@ -146,15 +147,15 @@ def infer(input_files):
         with open(os.path.join(training_args.output_dir, 'backoff_predictions.json'), 'w') as f:
             json.dump(samples, f, indent=4)
 
-        if test_args.do_specific_tests:
-            print('Predicting the Expert Specific Test sets on backoff...')
-            for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
-                samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
+    if test_args.do_specific_tests_backoff:
+        print('Predicting the Expert Specific Test sets on backoff...')
+        for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
+            samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
 
-                folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
-                os.makedirs(folder_path, exist_ok=True)
-                with open(os.path.join(folder_path, f'predictions_{test_args.specific_test_sets}'), 'w') as f:
-                    json.dump(samples, f, indent=4)
+            folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
+            os.makedirs(folder_path, exist_ok=True)
+            with open(os.path.join(folder_path, f'predictions_{test_args.specific_test_sets}.json'), 'w') as f:
+                json.dump(samples, f, indent=4)
 
 
     caller_model.to('cpu')

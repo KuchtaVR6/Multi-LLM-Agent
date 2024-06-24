@@ -13,4 +13,5 @@ python inference_utils/toolbench/infer_pipeline_patches.py \
   --regular_test_set False \
   --test_backoff False \
   --do_specific_tests True \
+  --do_specific_tests_backoff True \
   --specific_test_sets 'certain'
