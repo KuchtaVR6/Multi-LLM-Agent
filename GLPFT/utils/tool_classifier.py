@@ -1,5 +1,6 @@
 import re
 import json
+from datetime import datetime
 
 # def evaluate_reasoning(reasoning, expected_api, apis):
 #     number_of_apis_mentioned = 0
@@ -101,7 +102,7 @@ class ToolClassifier:
             ]
         self.encountered = set()
 
-    def tool_string_lookup(self, text):
+    def advanced_tool_string_lookup(self, text):
         tools_matched = set()
         for tool, strings in self.string_matching_tools.items():
             for string in strings:
@@ -114,20 +115,16 @@ class ToolClassifier:
         for tool in self.string_matching_tools.keys():
             if tool in text:
                 tools_matched.add(tool)
-        tools_found = list(tools_matched)
-        if len(tools_found) == 1:
-            return tools_found[0]
-        else:
-            return None
+        return list(tools_matched)
 
     def feed_plan(self, plan):
-        self.encountered = self.tool_string_lookup(remove_negations(plan))
+        self.encountered = self.simple_tool_string_lookup(remove_negations(plan))
 
         if len(self.encountered) == 1:
             return self.encountered[0]
         else:
             if len(self.encountered) > 1:
-                hard_removed = self.tool_string_lookup(remove_negations(plan, hard=True))
+                hard_removed = self.simple_tool_string_lookup(remove_negations(plan, hard=True))
                 if len(hard_removed) == 1:
                     return hard_removed[0]
         return None
