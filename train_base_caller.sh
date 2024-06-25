@@ -1,17 +1,20 @@
+#!/bin/bash
+
+# Set default value for the variant
+VARIANT=${1:-certain}
+
 cd ./GLPFT
 
 BSZ=6
 GA=1
 
 BB_PATH="saved_models/backbone"
-DATA_VARIANT=${1:-certain}
 
-EXP_NAME=/toolbench/caller_base_$DATA_VARIANT
+EXP_NAME=/toolbench/caller_base_$VARIANT
 export PYTHONPATH=./
 python train_mine.py \
     --model_name_or_path $BB_PATH  \
-    --data_variant $DATA_VARIANT \
-    --data_path dataset/toolbench/new_data/$DATA_VARIANT/train.json \
+    --data_path dataset/toolbench/new_data/$VARIANT/train.json \
     --output_dir saved_models/$EXP_NAME \
     --num_train_epochs 1 \
     --per_device_train_batch_size $BSZ \
