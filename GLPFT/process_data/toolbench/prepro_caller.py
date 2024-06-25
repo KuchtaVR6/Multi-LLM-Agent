@@ -190,6 +190,8 @@ for api_count_type, dir_path in [[api_counts_certain, all_apis_path], [api_count
     api_entries_test = defaultdict(list)
     category_entries_train = defaultdict(list)
     category_entries_test = defaultdict(list)
+    all_train = []
+    all_test = []
 
     for final_folder in ['endpoint', 'api_family', 'category']:
         if not os.path.exists(dir_path + '/' + final_folder):
@@ -218,6 +220,8 @@ for api_count_type, dir_path in [[api_counts_certain, all_apis_path], [api_count
 
         category_entries_train[category].extend(train_cases)
         category_entries_test[category].extend(test_cases)
+        all_train.extend(train_cases)
+        all_test.extend(test_cases)
 
     # Write concatenated entries to new JSON files in the output directory
     for api_name, entries in tqdm(api_entries_train.items()):
@@ -242,3 +246,11 @@ for api_count_type, dir_path in [[api_counts_certain, all_apis_path], [api_count
         output_file = os.path.join(dir_path, 'category/', f'{category_name}_test.json')
         with open(output_file, 'w') as f:
             json.dump(entries, f, indent=4)
+
+    output_file = os.path.join(dir_path, f'train.json')
+    with open(output_file, 'w') as f:
+        json.dump(all_train, f, indent=4)
+
+    output_file = os.path.join(dir_path, f'test.json')
+    with open(output_file, 'w') as f:
+        json.dump(all_test, f, indent=4)
