@@ -28,6 +28,9 @@ else
   CATEGORY=false
 fi
 
+# Lowercase the API_NAME
+API_NAME=$(echo "$API_NAME" | tr '[:upper:]' '[:lower:]')
+
 # Determine the DATA_PATH based on CATEGORY flag
 if [[ $CATEGORY == true ]]; then
   DATA_PATH="dataset/toolbench/new_data/${CERTAINTY}/category/${API_NAME}_train.json"
