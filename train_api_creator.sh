@@ -7,7 +7,6 @@ API_NAME=$1
 MODEL=${2:-caller}  # Default value of MODEL is 'caller' if not provided
 FILENAME="../inner_scripts/${3:-job}_api"  # Default value of FILENAME is 'job' if not provided
 ALL_APIS=${4:-false}  # Certain or all by default its certain cases
-CATEGORY=${5:-false}  # Default value of CATEGORY is false if not provided
 
 # Default settings
 USE_LORA=true
@@ -20,6 +19,13 @@ if [[ $ALL_APIS == true ]]; then
   CERTAINTY="all"
 else
   CERTAINTY="certain"
+fi
+
+# Check if the first letter of API_NAME is uppercase
+if [[ $API_NAME =~ ^[A-Z] ]]; then
+  CATEGORY=true
+else
+  CATEGORY=false
 fi
 
 # Determine the DATA_PATH based on CATEGORY flag
