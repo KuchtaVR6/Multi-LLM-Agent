@@ -132,7 +132,6 @@ for d in tqdm(data):
             history += ('conclusion: ' + utter['value'] + '</s>')
 
 print(tool_utterance, thought_not_usable, planner_caller_mismatch)
-exit()
 
 all_apis_path = os.path.dirname(args.output_path + 'all/')
 
