@@ -154,6 +154,7 @@ def split_data(data, test_size=0.1):
 
 api_name_seperator = '_for_'
 
+
 def load_api_to_category(file_path):
     api_to_category = {}
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -161,6 +162,7 @@ def load_api_to_category(file_path):
             api_name, category = line.strip().split(': ')
             api_to_category[api_name] = category
     return api_to_category
+
 
 def lower_and_replace_punctuation(text):
     # Convert to lowercase
@@ -177,12 +179,15 @@ def lower_and_replace_punctuation(text):
 
     return text
 
+
 # Load the API to Category mapping once
 api_to_category = load_api_to_category('dataset/toolbench/api_categories.txt')
+
 
 def find_api_category(api_name):
     category = api_to_category.get(api_name, "Category not found")
     return lower_and_replace_punctuation(category)
+
 
 for api_count_type, dir_path in [[api_counts_all, all_apis_path], [api_counts_certain, certain_apis_path]]:
     api_entries_train = defaultdict(list)
