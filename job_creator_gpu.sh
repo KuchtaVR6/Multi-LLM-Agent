@@ -22,7 +22,7 @@ cat <<EOF > "$job_script"
 
 # Grid Engine options
 #$ -N ${1}_new  # Name of the job
-#$ -wd /exports/eddie/scratch/s2595201/Multi-LLM-Agent # Run the job from the scratch directory
+#$ -wd /exports/eddie/scratch/s2595201/jobs/logs # Run the job from the scratch directory
 #$ -l h_rt=12:00:00  # Request a runtime
 #$ -q gpu          # Submit the job to the gpu queue
 #$ -pe gpu-a100 1  # Request NNODE A100 GPUs
