@@ -184,13 +184,14 @@ def find_api_category(api_name):
     category = api_to_category.get(api_name, "Category not found")
     return lower_and_replace_punctuation(category)
 
-for api_count_type, dir_path in [[api_counts_certain, all_apis_path], [api_counts_all, certain_apis_path]]:
+for api_count_type, dir_path in [[api_counts_all, all_apis_path], [api_counts_certain, certain_apis_path]]:
     api_entries_train = defaultdict(list)
     api_entries_test = defaultdict(list)
     category_entries_train = defaultdict(list)
     category_entries_test = defaultdict(list)
     all_train = []
     all_test = []
+    report_entries = ['tool, endpoint, api_family, category, train_samples, test_samples']
 
     for final_folder in ['endpoint', 'api_family', 'category']:
         if not os.path.exists(dir_path + '/' + final_folder):
@@ -221,6 +222,12 @@ for api_count_type, dir_path in [[api_counts_certain, all_apis_path], [api_count
         category_entries_test[category].extend(test_cases)
         all_train.extend(train_cases)
         all_test.extend(test_cases)
+
+        report_entries.append(f'{api}, {endpoint}, {api_name}, {category}, {len(train_cases)}, {len(test_cases)}')
+
+    output_file = os.path.join(dir_path, 'report.csv')
+    with open(output_file, 'w') as f:
+        f.write('\n'.join(report_entries))
 
     # Write concatenated entries to new JSON files in the output directory
     for api_name, entries in tqdm(api_entries_train.items()):
