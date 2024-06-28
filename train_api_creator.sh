@@ -64,7 +64,8 @@ else
 fi
 
 if [[ $CERTAINTY == "all"  ]]; then
-    EXP_NAME+="_all"
+    EXP_NAME=${dir%?} # remove last character
+    EXP_NAME=$dir"_all/"
     FILENAME+="_all"
 fi
 
