@@ -63,6 +63,11 @@ else
     FILENAME="../inner_scripts/${API_NAME}_api"
 fi
 
+if [[ $CERTAINTY == "all"  ]]; then
+    EXP_NAME+="_all"
+    FILENAME+="_all"
+fi
+
 echo "====================="
 echo "API_NAME: $API_NAME"
 echo "MODEL: $MODEL"
