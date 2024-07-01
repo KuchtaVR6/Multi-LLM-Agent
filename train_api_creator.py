@@ -146,19 +146,17 @@ def main(api_name, model='caller', all_apis=False):
                     path_to_patch = previous_target
                 else:
                     path_to_patch = previous_target + '_' + previous_base
-                print('>>', previous_base, path_to_patch, model)
-                patch_dir = 'output_patches/'
-                output_dir = patch_dir + model + '/'
+                patch_dir = 'output_patches/' + path_to_patch + '/'
+                output_dir = 'saved_models/' + model + '/'
 
                 if not os.path.exists(output_dir):
                     print('pre-training merge...')
-                    print(initial_base_model, path_to_patch, output_dir)
+                    print(previous_base, patch_dir, output_dir)
                     ## merge_patch_and_save(base_model, patch_path, output_dir) # TODO REVERT ONCE ON CLUSTER
 
-                exit()
-
                 input_model = output_dir
-                filename = filename.replace('_api', f'[{previous_target}]_api')
+                filename = filename.replace(f'_{initial_base_model}', '')
+                filename = filename.replace('_api', f'_{model}_api')
                 exp_name = doubly_patched_output(model, api_name, all_apis)
 
     if certainty == 'all':
