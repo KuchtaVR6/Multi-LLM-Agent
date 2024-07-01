@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
+import transformers
 import os
 import json
 import sys
+
+from peft import PeftConfig, get_peft_model
 
 
 def create_script_content(input_model, data_path, exp_name, epochs, bsz, ga, context_length, use_lora, filename,
@@ -45,6 +48,58 @@ python train_mine.py \\
         f.write(script_content)
 
     os.chmod(f"{filename}.sh", 0o755)
+
+
+def base_patch_path(model_base, patch_name, is_all=False):
+    if model_base == 'caller':
+        model_base = ''
+    else:
+        model_base = f'_{model_base}'
+
+    if is_all:
+        model_base += '_all'
+
+    return f"output_patches/{patch_name}{model_base}/"
+
+
+def output_dir_mix(model_base_full, is_all=False):
+    if is_all:
+        model_base_full += '_all'
+
+    return f"output_patches/{model_base_full}/"
+
+
+def doubly_patched_output(model_base_full, patch_name, is_all=False):
+    if is_all:
+        model_base_full += '_all'
+
+    return f"output_patches/{patch_name}_{model_base_full}"
+
+
+def merge_patch_and_save(model_suffix, patch_path, output_dir):
+    if model_suffix is None:
+        model_suffix = 'caller'
+
+    if model_suffix == 'llama':
+        model_name_or_path = "meta-llama/Llama-2-7b-hf"
+    elif model_suffix == 'dev':
+        model_name_or_path = "EleutherAI/pythia-160m"
+    else:
+        model_name_or_path = f'saved_models/{model_suffix}'
+
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
+    model = transformers.AutoModelForCausalLM.from_pretrained(
+        model_name_or_path
+    )
+    if tokenizer.pad_token_id == None:
+        tokenizer.add_special_tokens({"bos_token": "<s>", "eos_token": "</s>", "pad_token": "<pad>"})
+        model.resize_token_embeddings(len(tokenizer))
+
+    current_config = PeftConfig.from_pretrained(patch_path)
+    model = get_peft_model(model, current_config)
+
+    model.save_pretrained(output_dir)
+    tokenizer.save_pretrained(output_dir)
 
 
 def main(api_name, model='caller', all_apis=False):
@@ -96,9 +151,25 @@ def main(api_name, model='caller', all_apis=False):
                    f"output_patches/{api_name}/"),
     }
 
-    for base_model in model_settings:
-        if model.startswith(base_model):
-            input_model, context_length, target_modules, filename, exp_name = model_settings[model]
+    for initial_base_model in model_settings:
+        if model.startswith(initial_base_model):
+            input_model, context_length, target_modules, filename, exp_name = model_settings[initial_base_model]
+
+            if '[' in model and ']' in model:
+                target = model.rsplit('[', 1)[1].split(']', 1)[0]
+                previous_base = model.rsplit('[', 1)[0] + ']'
+                print('>>', target, previous_base)
+                patch_path = base_patch_path(initial_base_model, target, all_apis)
+                output_dir = output_dir_mix(model, all_apis)
+
+                if not os.path.exists(output_dir):
+                    print('pre-training merge...')
+                    print(initial_base_model, patch_path, output_dir)
+                    ## merge_patch_and_save(base_model, patch_path, output_dir) # TODO REVERT ONCE ON CLUSTER
+
+                input_model = output_dir
+                filename = filename.replace('_api', f'[{target}]_api')
+                exp_name = doubly_patched_output(model, api_name, all_apis)
 
     if certainty == 'all':
         exp_name = exp_name.rstrip('/') + '_all/'
