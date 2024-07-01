@@ -50,25 +50,6 @@ python train_mine.py \\
     os.chmod(f"{filename}.sh", 0o755)
 
 
-def base_patch_path(model_base, patch_name, is_all=False):
-    if model_base == 'caller':
-        model_base = ''
-    else:
-        model_base = f'_{model_base}'
-
-    if is_all:
-        model_base += '_all'
-
-    return f"output_patches/{patch_name}{model_base}/"
-
-
-def output_dir_mix(model_base_full, is_all=False):
-    if is_all:
-        model_base_full += '_all'
-
-    return f"output_patches/{model_base_full}/"
-
-
 def doubly_patched_output(model_base_full, patch_name, is_all=False):
     if is_all:
         model_base_full += '_all'
@@ -156,19 +137,28 @@ def main(api_name, model='caller', all_apis=False):
             input_model, context_length, target_modules, filename, exp_name = model_settings[initial_base_model]
 
             if '[' in model and ']' in model:
-                target = model.rsplit('[', 1)[1].split(']', 1)[0]
-                previous_base = model.rsplit('[', 1)[0] + ']'
-                print('>>', target, previous_base)
-                patch_path = base_patch_path(initial_base_model, target, all_apis)
-                output_dir = output_dir_mix(model, all_apis)
+                previous_target = model.rsplit('[', 1)[1].split(']', 1)[0]
+                if '[' in model.rsplit('[', 1)[0]:
+                    previous_base = model.rsplit('[', 1)[0] + ']'
+                else:
+                    previous_base = initial_base_model
+                if previous_base == 'caller':
+                    path_to_patch = previous_target
+                else:
+                    path_to_patch = previous_target + '_' + previous_base
+                print('>>', previous_base, path_to_patch, model)
+                patch_dir = 'output_patches/'
+                output_dir = patch_dir + model + '/'
 
                 if not os.path.exists(output_dir):
                     print('pre-training merge...')
-                    print(initial_base_model, patch_path, output_dir)
+                    print(initial_base_model, path_to_patch, output_dir)
                     ## merge_patch_and_save(base_model, patch_path, output_dir) # TODO REVERT ONCE ON CLUSTER
 
+                exit()
+
                 input_model = output_dir
-                filename = filename.replace('_api', f'[{target}]_api')
+                filename = filename.replace('_api', f'[{previous_target}]_api')
                 exp_name = doubly_patched_output(model, api_name, all_apis)
 
     if certainty == 'all':
