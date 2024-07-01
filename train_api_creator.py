@@ -151,8 +151,7 @@ def main(api_name, model='caller', all_apis=False):
 
                 if not os.path.exists(output_dir):
                     print('pre-training merge...')
-                    print(previous_base, patch_dir, output_dir)
-                    ## merge_patch_and_save(base_model, patch_path, output_dir) # TODO REVERT ONCE ON CLUSTER
+                    merge_patch_and_save(previous_base, patch_dir, output_dir)
 
                 input_model = output_dir
                 filename = filename.replace(f'_{initial_base_model}', '')
