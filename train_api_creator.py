@@ -58,35 +58,47 @@ def main(api_name, model='caller', all_apis=False):
     ga = 8 // bsz  # Ensure BSZ * GA = 8
     context_length = 4096
 
-    category = api_name[0].isupper()
-    api_name = api_name.lower()
-
-    if category:
-        data_path = f"dataset/toolbench/new_data/{certainty}/category/{api_name}_train.json"
+    if api_name[0].isupper():
+        expert_target_type = 'category'
     elif "_for_" in api_name:
-        data_path = f"dataset/toolbench/new_data/{certainty}/endpoint/{api_name}_train.json"
+        expert_target_type = 'endpoint'
     else:
-        data_path = f"dataset/toolbench/new_data/{certainty}/api_family/{api_name}_train.json"
+        expert_target_type = 'api_family'
+
+    api_name = api_name.lower()
+    data_path = f"dataset/toolbench/new_data/{certainty}/{expert_target_type}/{api_name}_train.json"
 
     exp_name = f"output_patches/{api_name}/"
 
     model_settings = {
-        'dev': ("EleutherAI/pythia-160m", 2048, "query_key_value", f"../inner_scripts/{api_name}_dev_api",
+        'dev': ("EleutherAI/pythia-160m",
+                2048,
+                "query_key_value",
+                f"../inner_scripts/{api_name}_dev_api",
                 f"output_patches/{api_name}_dev/"),
-        'backbone': ("saved_models/backbone", 4096, None, f"../inner_scripts/{api_name}_backbone_api",
+
+        'backbone': ("saved_models/backbone",
+                     4096,
+                     None,
+                     f"../inner_scripts/{api_name}_backbone_api",
                      f"output_patches/{api_name}_backbone/"),
-        'llama': ("meta-llama/Llama-2-7b-hf", 4096, None, f"../inner_scripts/{api_name}_llama_api",
+
+        'llama': ("meta-llama/Llama-2-7b-hf",
+                  4096,
+                  None,
+                  f"../inner_scripts/{api_name}_llama_api",
                   f"output_patches/{api_name}_llama/"),
-        "caller[vimeo]": (
-        "placeholder_model", "placeholder_context_length", "placeholder_target_modules", "placeholder_filename",
-        "placeholder_experiment_name")
+
+        'caller': ("shenwzh3/alpha-umi-caller-7b",
+                   4096,
+                   None,
+                   f"../inner_scripts/{api_name}_api",
+                   f"output_patches/{api_name}/"),
     }
 
-    if model in model_settings:
-        input_model, context_length, target_modules, filename, exp_name = model_settings[model]
-    else:
-        input_model = "shenwzh3/alpha-umi-caller-7b"
-        filename = f"../inner_scripts/{api_name}_api"
+    for base_model in model_settings:
+        if model.startswith(base_model):
+            input_model, context_length, target_modules, filename, exp_name = model_settings[model]
 
     if certainty == 'all':
         exp_name = exp_name.rstrip('/') + '_all/'
