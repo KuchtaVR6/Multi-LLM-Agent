@@ -134,7 +134,7 @@ def infer(input_files):
             folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
             os.makedirs(folder_path, exist_ok=True)
 
-            with open(os.path.join(folder_path, f'predictions_{test_args.specific_test_sets}'), 'w') as f:
+            with open(os.path.join(folder_path, f'predictions_{test_args.specific_test_sets}.json'), 'w') as f:
                 json.dump(samples, f, indent=4)
 
 

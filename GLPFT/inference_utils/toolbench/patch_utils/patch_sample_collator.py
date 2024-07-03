@@ -3,6 +3,7 @@ import os.path
 from collections import defaultdict
 from utils.prompt_lib import prompt_dict
 import copy
+from utils.tool_classifier import ToolClassifier
 
 
 class PatchAndSampleCollator():
@@ -83,15 +84,14 @@ def build_caller_infer_samples(raw_data, planner_prompt_type):
                         action_end_idx = u['value'].index("Next: caller.")
                         planner_prediction = u['value'][:action_end_idx + len("Next: caller.")]
 
-                        tool_selected = None
-                        # which tool to use
-                        for tool_name in tool_names.split(', '):
-                            if tool_name in planner_prediction:
-                                if tool_selected:
-                                    tool_selected = "[AMBIGUOUS]"
-                                    break
-                                else:
-                                    tool_selected = tool_name
+                        tool_classifier = ToolClassifier(tool_names.split(', '))
+                        mentioned_tool = tool_classifier.feed_plan(planner_prediction)
+
+                        print('=='*20)
+                        print(tool_names.split(', '),'->',mentioned_tool)
+                        print('--'*20)
+                        print(planner_prediction)
+                        print('=='*20)
 
                         reference = u['from'] + ': ' + u['value'] + "</s>" + 'caller' + ": " + d['target'] + '</s>'
                         conversations.append({
@@ -102,7 +102,7 @@ def build_caller_infer_samples(raw_data, planner_prompt_type):
                             'model_input_for_caller': prompt + ' assistant: ',
                             'reference': reference,
                             'caller_sample_id': len(conversations),  # easier identification
-                            'caller_tool_requested': tool_selected,
+                            'caller_tool_requested': mentioned_tool,
                             'planner_prediction': planner_prediction
                         })
                 dispatch += ('assistant: ' + u['value'] + '</s>')
@@ -118,5 +118,3 @@ def build_caller_infer_samples(raw_data, planner_prompt_type):
                 dispatch += ('conclusion: ' + u['value'] + '</s>')
 
     return conversations
-
-# TODO MISSING THE caller_tool_requested
