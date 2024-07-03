@@ -69,9 +69,9 @@ def merge_patch_and_save(model_suffix, patch_path, output_dir):
         model_name_or_path = f'saved_models/{model_suffix}'
 
     if '_all' in patch_path:
-        full_patch_path = patch_path.replace('/', f'/all/')
+        full_patch_path = patch_path.replace('/', f'/all/', 1)
     else:
-        full_patch_path = patch_path.replace('/', f'/{model_suffix}/')
+        full_patch_path = patch_path.replace('/', f'/{model_suffix}/', 1)
     current_config = PeftConfig.from_pretrained(full_patch_path)
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
