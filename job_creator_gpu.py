@@ -8,7 +8,7 @@ def jobify(job_name):
     number_of_gpus = 1
 
     job_script = f"../jobs/{job_name.rsplit('/', 1)[1]}_job.sh"
-    inner_script = "{job_name}.sh"
+    inner_script = f"{job_name}.sh"
 
     # Check if the inner script exists
     if not os.path.isfile(inner_script):
