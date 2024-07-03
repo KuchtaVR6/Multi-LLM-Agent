@@ -12,6 +12,7 @@ class PatchManager:
         self.dir_path_to_api_name = {}
         self.patch_hierarchy = defaultdict(lambda: defaultdict(lambda: defaultdict(str)))
         self.parse_api_categories()
+        self.categories = [value.lower() for value in self.api_to_category.values()]
         self.find_all_patches()
         self.categorize_patches()
 
@@ -45,7 +46,7 @@ class PatchManager:
                 self.api_to_category[api_fam] = category
 
     def parse_patch_name(self, name):
-        if name in self.api_to_category.values():
+        if name in self.categories:
             return {
                 'category': name,
                 'api_family': None,
