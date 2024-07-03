@@ -4,12 +4,7 @@ import os
 import sys
 
 
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: script.py <job_name>")
-        sys.exit(1)
-
-    job_name = sys.argv[1]
+def jobify(job_name):
     number_of_gpus = 1
 
     job_script = f"../jobs/{job_name}_job.sh"
@@ -69,6 +64,12 @@ huggingface-cli login --token $HF_TOKEN --add-to-git-credential
 
     print(f"Script {job_script} has been created and made executable.")
 
+    return job_script
+
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print("Usage: script.py <job_name>")
+        sys.exit(1)
+
+    jobify(sys.argv[1])

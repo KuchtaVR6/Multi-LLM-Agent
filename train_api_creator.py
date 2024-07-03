@@ -4,8 +4,10 @@ import transformers
 import os
 import json
 import sys
+import subprocess
 
 from peft import PeftConfig, get_peft_model
+from job_creator_gpu import jobify
 
 
 def create_script_content(input_model, data_path, exp_name, epochs, bsz, ga, context_length, use_lora, filename,
@@ -206,6 +208,8 @@ def main(api_name, model='caller', all_apis=False):
     print(
         f"Script {filename}.sh has been created and made executable. It is configured to train the model '{model}' using data for the API '{api_name}'. {sample_count} training samples will be seen during training.")
 
+    return filename
+
 
 if __name__ == '__main__':
     import argparse
@@ -217,4 +221,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.api_name, args.model, args.all_apis)
+    filename = main(args.api_name, args.model, args.all_apis)
+    job_filename = jobify(filename)
+
+    # Submit the job script using qsub
+    try:
+        subprocess.run(["qsub", job_filename], check=True)
+        print(f">>> Job script {job_filename} has been submitted.")
+    except subprocess.CalledProcessError as e:
+        print(f"<<< Failed to submit job script {job_filename}. Error: {e}")
