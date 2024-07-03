@@ -223,10 +223,3 @@ if __name__ == '__main__':
 
     filename = main(args.api_name, args.model, args.all_apis)
     job_filename = jobify(filename)
-
-    # Submit the job script using qsub
-    try:
-        subprocess.run(["qsub", job_filename], check=True)
-        print(f">>> Job script {job_filename} has been submitted.")
-    except subprocess.CalledProcessError as e:
-        print(f"<<< Failed to submit job script {job_filename}. Error: {e}")
