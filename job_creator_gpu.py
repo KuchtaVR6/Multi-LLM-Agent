@@ -47,7 +47,7 @@ source /exports/csce/eddie/inf/groups/dawg/miniconda3/bin/activate base
 
 cd /exports/eddie/scratch/s2595201/Multi-LLM-Agent
 
-conda activate api_expert_env
+conda activate api_expert_train
 
 export TOKENIZERS_PARALLELIZM=false
 
