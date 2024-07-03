@@ -4,11 +4,13 @@ import os
 import sys
 
 
-def jobify(job_name):
+def jobify(job_path):
     number_of_gpus = 1
 
-    job_script = f"../jobs/{job_name.rsplit('/', 1)[1]}_job.sh"
-    inner_script = f"{job_name}.sh"
+    small_job_name = job_path.rsplit('/', 1)[1]
+
+    job_script = f"../jobs/{small_job_name}_job.sh"
+    inner_script = f"{job_path}.sh"
 
     # Check if the inner script exists
     if not os.path.isfile(inner_script):
@@ -23,7 +25,7 @@ def jobify(job_name):
         f.write(f"""#!/bin/bash
 
 # Grid Engine options
-#$ -N {job_name}_new  # Name of the job
+#$ -N {small_job_name}_new  # Name of the job
 #$ -wd /exports/eddie/scratch/s2595201/jobs/logs # Run the job from the scratch directory
 #$ -l h_rt=12:00:00  # Request a runtime
 #$ -q gpu          # Submit the job to the gpu queue
