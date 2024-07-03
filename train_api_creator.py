@@ -166,6 +166,11 @@ def main(api_name, model='caller', all_apis=False):
     if certainty == 'all':
         exp_name = exp_name.rstrip('/') + '_all/'
         filename += '_all'
+        model_folder_out = 'all/' + model
+    else:
+        model_folder_out = model
+
+    exp_name = exp_name.replace('/', f'/{model_folder_out}/', 1)
 
     print("=====================")
     print(f"API_NAME: {api_name}")
