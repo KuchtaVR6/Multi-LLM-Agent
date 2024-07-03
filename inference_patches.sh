@@ -10,8 +10,8 @@ python inference_utils/toolbench/infer_pipeline_patches.py \
   --summarizer_prompt_type toolbench_summarizer \
   --max_input_length 3750 \
   --output_dir output_patches/test \
-  --regular_test_set False \
-  --test_backoff False \
+  --regular_test_set True \
+  --test_backoff True \
   --do_specific_tests True \
   --do_specific_tests_backoff True \
   --specific_test_sets 'certain'
