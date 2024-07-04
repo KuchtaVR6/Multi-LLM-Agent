@@ -16,18 +16,17 @@ def merge_patch_and_save(model_suffix, patch_path, output_dir):
         model_name_or_path = f'saved_models/{model_suffix}'
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
-    model = transformers.AutoModelForCausalLM.from_pretrained(
+    base_model = transformers.AutoModelForCausalLM.from_pretrained(
         model_name_or_path
     )
     if tokenizer.pad_token_id == None:
         tokenizer.add_special_tokens({"bos_token": "<s>", "eos_token": "</s>", "pad_token": "<pad>"})
-        model.resize_token_embeddings(len(tokenizer))
+        base_model.resize_token_embeddings(len(tokenizer))
 
-    current_config = PeftConfig.from_pretrained(patch_path)
-    model = get_peft_model(model, current_config)
+    model = PeftConfig.from_pretrained(base_model, patch_path)
 
-    merged_model = model.merge_and_unload()
-    merged_model.save_pretrained(output_dir)
+    model.merge_adapter()
+    model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
 
 
