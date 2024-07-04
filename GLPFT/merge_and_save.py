@@ -25,7 +25,7 @@ def merge_patch_and_save(model_suffix, patch_path, output_dir):
 
     model = PeftConfig.from_pretrained(base_model, patch_path)
 
-    model.merge_adapter()
+    model.merge_and_unload()
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
 
