@@ -26,8 +26,8 @@ def merge_patch_and_save(model_suffix, patch_path, output_dir):
     current_config = PeftConfig.from_pretrained(patch_path)
     model = get_peft_model(model, current_config)
 
-    model.merge_and_unload()
-    model.save_pretrained(output_dir)
+    merged_model = model.merge_and_unload()
+    merged_model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
 
 
