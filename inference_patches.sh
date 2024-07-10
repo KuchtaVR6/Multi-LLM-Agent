@@ -14,4 +14,5 @@ python inference_utils/toolbench/infer_pipeline_patches.py \
   --test_backoff False \
   --do_specific_tests True \
   --do_specific_tests_backoff True \
-  --specific_test_sets 'certain'
+  --specific_test_sets 'all' \
+  --model_suffix 'caller'
