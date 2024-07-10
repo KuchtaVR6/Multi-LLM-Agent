@@ -8,7 +8,7 @@ import argparse
 def jobify(job_path, use_inference=False):
     number_of_gpus = 1
 
-    small_job_name = job_path.rsplit('/', -1)[1]
+    small_job_name = job_path.rsplit('/', 1)[-1]
 
     job_script = f"../jobs/{small_job_name}_job.sh"
     inner_script = f"{job_path}.sh"
