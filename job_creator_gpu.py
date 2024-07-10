@@ -2,12 +2,13 @@
 
 import os
 import sys
+import argparse
 
 
-def jobify(job_path):
+def jobify(job_path, use_inference=False):
     number_of_gpus = 1
 
-    small_job_name = job_path.rsplit('/', 1)[1]
+    small_job_name = job_path.rsplit('/', -1)[1]
 
     job_script = f"../jobs/{small_job_name}_job.sh"
     inner_script = f"{job_path}.sh"
@@ -44,7 +45,7 @@ source /exports/csce/eddie/inf/groups/dawg/miniconda3/bin/activate base
 
 cd /exports/eddie/scratch/s2595201/Multi-LLM-Agent
 
-conda activate api_expert_train
+conda activate api_expert{"_inference" if use_inference else "_train"}
 
 export TOKENIZERS_PARALLELIZM=false
 
@@ -70,8 +71,10 @@ huggingface-cli login --token $HF_TOKEN --add-to-git-credential
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: script.py <job_name>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='Generate job script for a given job.')
+    parser.add_argument('job_name', type=str, help='Name of the job')
+    parser.add_argument('--inference', action='store_true', help='Use the _inference conda environment instead of _train')
 
-    jobify(sys.argv[1])
+    args = parser.parse_args()
+
+    jobify(args.job_name, args.inference)
