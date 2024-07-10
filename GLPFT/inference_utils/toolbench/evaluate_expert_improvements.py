@@ -3,10 +3,11 @@ import os
 from collections import defaultdict
 
 from multi_agent_utils import (evaluate_rougel, evaluate_reasoning, evaluate_action_em, evaluate_action_input_f1,
-                               count_unique_strings, display_counts, sort_and_display_dict, parse_output)
+                               parse_output)
 
 
-def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_matching=False, only_certain=False):
+def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_matching=False, only_certain=False,
+             output_func=print):
     with open(input_path_expert, encoding='utf-8') as f:
         expert_data = json.load(f)
 
@@ -111,8 +112,8 @@ def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_match
         with open(output_path.replace('metrics.json', 'hallu_cases.json'), 'w', encoding='utf-8') as f:
             json.dump(hallu_cases, f, indent=2)
 
-        print('F1 INFORMATION')
-        print('name,em,f1,hard_f1,easy_f1,adj_f1,adj_hard_f1,adj_easy_f1')
+        output_func('F1 INFORMATION')
+        output_func('name,em,f1,hard_f1,easy_f1,adj_f1,adj_hard_f1,adj_easy_f1')
         for ref in f1_dict.keys():
             f1_data = f1_dict[ref]
             hard_f1_data = hard_f1_dict[ref]
@@ -127,7 +128,7 @@ def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_match
             if em == 0 or em == 1 or f1 + hard_f1 + easy_f1 == 0:
                 continue
 
-            print(f'{ref},{em:.2f},{f1:.2f},{hard_f1:.2f},{easy_f1:.2f}')
+            output_func(f'{ref},{em:.2f},{f1:.2f},{hard_f1:.2f},{easy_f1:.2f}')
 
 
 if __name__ == "__main__":
