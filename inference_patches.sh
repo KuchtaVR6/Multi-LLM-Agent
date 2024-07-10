@@ -11,7 +11,7 @@ python inference_utils/toolbench/infer_pipeline_patches.py \
   --max_input_length 3750 \
   --output_dir output_patches/test \
   --regular_test_set True \
-  --test_backoff True \
-  --do_specific_tests False \
+  --test_backoff False \
+  --do_specific_tests True \
   --do_specific_tests_backoff True \
   --specific_test_sets 'certain'
