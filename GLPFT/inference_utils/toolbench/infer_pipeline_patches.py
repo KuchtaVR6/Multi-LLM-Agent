@@ -119,10 +119,7 @@ def infer(input_files):
             caller_model.set_adapter(patch)
             samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
 
-            folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
-            os.makedirs(folder_path, exist_ok=True)
-
-            with open(os.path.join(folder_path, 'predictions.json'), 'w') as f:
+            with open(os.path.join(patch, 'toolbench_expert_predictions.json'), 'w') as f:
                 json.dump(samples, f, indent=4)
 
     if test_args.do_specific_tests:
@@ -131,12 +128,8 @@ def infer(input_files):
             caller_model.set_adapter(patch)
             samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
 
-            folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
-            os.makedirs(folder_path, exist_ok=True)
-
-            with open(os.path.join(folder_path, f'predictions_{test_args.specific_test_sets}.json'), 'w') as f:
+            with open(os.path.join(patch, f'{test_args.specific_test_sets}_expert_predictions.json'), 'w') as f:
                 json.dump(samples, f, indent=4)
-
 
     if test_args.test_backoff:
         print('Predicting the Toolbench Test sets on backoff...')
@@ -144,7 +137,7 @@ def infer(input_files):
         samples = infer_on_samples(collator.all_samples, caller_trainer, caller_tokenizer, data_args)
         os.makedirs(training_args.output_dir, exist_ok=True)
 
-        with open(os.path.join(training_args.output_dir, 'backoff_predictions.json'), 'w') as f:
+        with open(os.path.join(training_args.output_dir, 'toolbench_backoff_predictions.json'), 'w') as f:
             json.dump(samples, f, indent=4)
 
     if test_args.do_specific_tests_backoff:
@@ -152,11 +145,8 @@ def infer(input_files):
         for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
             samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
 
-            folder_path = os.path.join(training_args.output_dir, api_name + '_' + patch_manager.model_suffix)
-            os.makedirs(folder_path, exist_ok=True)
-            with open(os.path.join(folder_path, f'backoff_predictions_{test_args.specific_test_sets}.json'), 'w') as f:
+            with open(os.path.join(patch, f'{test_args.specific_test_sets}_backoff_predictions.json'), 'w') as f:
                 json.dump(samples, f, indent=4)
-
 
     caller_model.to('cpu')
     caller_trainer.model.to('cpu')
