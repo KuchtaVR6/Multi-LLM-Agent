@@ -51,10 +51,10 @@ class TestArguments:
 def load_model_with_adapters_and_tokenizer(model_suffix, patch_manager):
     if model_suffix == 'llama':
         model_name_or_path = "meta-llama/Llama-2-7b-hf"
-    elif model_suffix == 'backbone':
-        model_name_or_path = "saved_models/backbone"
     elif model_suffix == 'dev':
         model_name_or_path = "EleutherAI/pythia-160m"
+    elif model_suffix:
+        model_name_or_path = f"saved_models/{model_suffix}"
     else:
         model_name_or_path = "saved_models/caller"
 
