@@ -28,7 +28,7 @@ def jobify(job_path, use_inference=False):
 # Grid Engine options
 #$ -N {small_job_name}_new  # Name of the job
 #$ -wd /exports/eddie/scratch/s2595201/jobs/logs # Run the job from the scratch directory
-#$ -l h_rt=12:00:00  # Request a runtime
+#$ -l h_rt={"24:00:00" if use_inference else "12:00:00"}  # Request a runtime
 #$ -q gpu          # Submit the job to the gpu queue
 #$ -pe gpu-a100 {number_of_gpus}  # Request NNODE A100 GPUs
 #$ -l h_vmem=80G    # Request memory per core
