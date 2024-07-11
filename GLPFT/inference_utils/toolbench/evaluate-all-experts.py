@@ -7,6 +7,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_path_folder', type=str, default="")
     parser.add_argument('--output_path', type=str, default="")
+    parser.add_argument('--input_path_backoff', type=str, default="")
 
     args = parser.parse_args()
 
@@ -17,16 +18,16 @@ if __name__ == "__main__":
     for test_type in ['all', 'certain']:
         with open(os.path.join(args.output_path, f'test_specific_results_{test_type}.txt'), 'w') as file:
             def output(line):
-                file.write(line)
+                file.write(line + '\n')
 
             for dir_path, dir_names, filenames in os.walk(args.input_path_folder):
                 target_filename = f'{test_type}_expert_predictions.json'
                 backoff_filename = f'{test_type}_backoff_predictions.json'
                 if target_filename in filenames:
                     if backoff_filename in filenames:
-                        file.write(f'Adapter: {dir_path}')
+                        output(f'Adapter: {dir_path}')
                         evaluate(os.path.join(dir_path, target_filename),
-                                 os.path.join(dir_path, backoff_filename), args.output_path,
+                                 os.path.join(dir_path, backoff_filename), os.path.join(args.output_path, 'metrics.json'),
                                  False, False, output_func=output)
                     else:
                         print(f'[MAJOR WARNING] >>> BACKOFF MISSING FOR {dir_path}')

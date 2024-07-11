@@ -108,8 +108,8 @@ def parse_output(text):
         action = None
         action_input = None
         if 'conclusion:' in text:
-            answer_idx = text.rindex('conclusion: ')
-            answer = text[answer_idx + len('conclusion: '):]
+            answer_idx = text.rindex('conclusion:')
+            answer = text[answer_idx + len('conclusion:'):]
         else:
             answer = text
         answer = answer.replace('</s>',"")
