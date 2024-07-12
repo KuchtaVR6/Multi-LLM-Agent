@@ -19,7 +19,8 @@ def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_match
         else:
             original_data = json.load(f)
 
-    for current_data in [original_data, expert_data]:
+    output_func('name,em,f1,hard_f1,easy_f1,number_of_samples')
+    for [label, current_data] in [['backoff', original_data], ['expert', expert_data]]:
         plan_ref = []
         plan_pred = []
         hallu_cases = []
@@ -106,13 +107,9 @@ def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_match
 
         if not os.path.exists(os.path.dirname(output_path)):
             os.makedirs(os.path.dirname(output_path))
-        # with open(output_path, 'w', encoding='utf-8') as f:
-        #     json.dump(metric, f, indent=2)
-        #
-        # with open(output_path.replace('metrics.json', 'hallu_cases.json'), 'w', encoding='utf-8') as f:
-        #     json.dump(hallu_cases, f, indent=2)
 
-        output_func('name,em,f1,hard_f1,easy_f1,adj_f1,adj_hard_f1,adj_easy_f1,number_of_samples')
+        output_func(f'{label},{action_em:.2f},{f1:.2f},{hard_f1:.2f},{easy_f1:.2f},{len(f1_list)}')
+
         for ref in f1_dict.keys():
             f1_data = f1_dict[ref]
             hard_f1_data = hard_f1_dict[ref]
@@ -124,7 +121,7 @@ def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_match
 
             em = action_em_per_ref.get(ref, 1)
 
-            output_func(f'{ref},{em:.2f},{f1:.2f},{hard_f1:.2f},{easy_f1:.2f},{len(f1_data)}')
+            output_func(f'{label}_{ref},{em:.2f},{f1:.2f},{hard_f1:.2f},{easy_f1:.2f},{len(f1_data)}')
 
 
 if __name__ == "__main__":

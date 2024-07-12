@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     with open(os.path.join(args.output_path, f'test_toolbench_results.txt'), 'w') as file:
         def output(line):
-            file.write(line)
+            file.write(line + '\n')
 
         for dir_path, dir_names, filenames in os.walk(args.input_path_folder):
             target_filename = f'toolbench_expert_predictions.json'
