@@ -116,19 +116,25 @@ def infer(input_files):
     if test_args.regular_test_set:
         print('Predicting the ToolBench Test set...')
         for patch, api_name, samples in collator:
+            target_filepath = os.path.join(patch, f'toolbench_expert_predictions.json')
+            if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
+                continue
             caller_model.set_adapter(patch)
             samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
 
-            with open(os.path.join(patch, 'toolbench_expert_predictions.json'), 'w') as f:
+            with open(target_filepath, 'w') as f:
                 json.dump(samples, f, indent=4)
 
     if test_args.do_specific_tests:
         print('Predicting the Expert Specific Test sets...')
         for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
+            target_filepath = os.path.join(patch, f'{test_args.specific_test_sets}_expert_predictions.json')
+            if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
+                continue
             caller_model.set_adapter(patch)
             samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
 
-            with open(os.path.join(patch, f'{test_args.specific_test_sets}_expert_predictions.json'), 'w') as f:
+            with open(target_filepath, 'w') as f:
                 json.dump(samples, f, indent=4)
 
     if test_args.test_backoff:
@@ -143,9 +149,12 @@ def infer(input_files):
     if test_args.do_specific_tests_backoff:
         print('Predicting the Expert Specific Test sets on backoff...')
         for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
-            samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
+            target_filepath = os.path.join(patch, f'{test_args.specific_test_sets}_backoff_predictions.json')
+            if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
+                continue
 
-            with open(os.path.join(patch, f'{test_args.specific_test_sets}_backoff_predictions.json'), 'w') as f:
+            samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
+            with open(target_filepath, 'w') as f:
                 json.dump(samples, f, indent=4)
 
     caller_model.to('cpu')
