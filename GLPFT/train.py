@@ -262,9 +262,11 @@ def train():
         replace_llama_with_condense(ratio=condense_ratio)
 
     local_rank = training_args.local_rank
+    model_kwargs = {'torch_dtype': torch.bfloat16}
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
+        **model_kwargs
     )
     model.config.use_cache = False
     tokenizer = transformers.AutoTokenizer.from_pretrained(
@@ -273,6 +275,7 @@ def train():
         model_max_length=training_args.model_max_length,
         padding_side="right",
         use_fast=False,
+        bf16=True
     )
     tokenizer.pad_token = tokenizer.unk_token
 
