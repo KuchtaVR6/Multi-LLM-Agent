@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
-import transformers
 import os
 import json
 import sys
-import subprocess
 
-from peft import PeftConfig, get_peft_model
 from job_creator_gpu import jobify
 
 
@@ -60,6 +57,9 @@ def doubly_patched_output(model_base_full, patch_name, is_all=False):
 
 
 def merge_patch_and_save(model_suffix, patch_path, output_dir):
+    import transformers
+    from peft import PeftConfig, get_peft_model
+
     if model_suffix is None:
         model_suffix = 'caller'
 
