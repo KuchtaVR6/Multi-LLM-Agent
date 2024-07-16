@@ -6,7 +6,7 @@ from multi_agent_utils import (evaluate_rougel, evaluate_reasoning, evaluate_act
                                parse_output)
 
 
-def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_matching=False, only_certain=False,
+def evaluate(input_path_expert, input_path_backoff, id_sample_matching=False, only_certain=False,
              output_func=print):
     with open(input_path_expert, encoding='utf-8') as f:
         expert_data = json.load(f)
@@ -105,9 +105,6 @@ def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_match
         metric['f1'] = f1
         metric['hallu_rate'] = hallu_rate
 
-        if not os.path.exists(os.path.dirname(output_path)):
-            os.makedirs(os.path.dirname(output_path))
-
         output_func(f'{label},{action_em:.2f},{f1:.2f},{hard_f1:.2f},{easy_f1:.2f},{len(f1_list)}')
 
         for ref in f1_dict.keys():
@@ -131,9 +128,8 @@ if __name__ == "__main__":
     parser.add_argument('--input_path_expert', type=str, default="")
     parser.add_argument('--input_path_backoff', type=str, default="")
     parser.add_argument('--id_sample_matching', type=bool, default=False)
-    parser.add_argument('--output_path', type=str, default="")
     parser.add_argument('--only_certain', type=bool, default=False)
 
     args = parser.parse_args()
 
-    evaluate(args.input_path_expert, args.input_path_backoff, args.output_path, args.id_sample_matching, args.only_certain)
+    evaluate(args.input_path_expert, args.input_path_backoff, args.id_sample_matching, args.only_certain)

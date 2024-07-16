@@ -32,7 +32,6 @@ if __name__ == "__main__":
                             output(f'Adapter: {dir_path}')
                             evaluate(os.path.join(dir_path, target_filename),
                                      os.path.join(dir_path, backoff_filename),
-                                     os.path.join(args.output_path, 'metrics.json'),
                                      False, False, output_func=output)
                         else:
                             print(f'[MAJOR WARNING] >>> {test_type} BACKOFF MISSING FOR {dir_path}')
@@ -50,5 +49,5 @@ if __name__ == "__main__":
             target_filename = f'toolbench_expert_predictions.json'
             if target_filename in filenames:
                 file.write(f'Adapter: {dir_path}')
-                evaluate(os.path.join(dir_path, target_filename), args.input_path_backoff, args.output_path,
-                         False, False, output_func=output)
+                evaluate(os.path.join(dir_path, target_filename), args.input_path_backoff,
+                         True, False, output_func=output)
