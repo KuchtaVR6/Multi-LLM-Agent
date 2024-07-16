@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from job_creator_gpu import jobify
 import argparse
 import os
