@@ -83,9 +83,9 @@ def evaluate(input_path_expert, input_path_backoff, output_path, id_sample_match
 
         metric = {}
         rouge = evaluate_rougel(answer_pred, answer_ref)
-        plan_em = evaluate_action_em(plan_ref, plan_pred)
+        plan_em, _ = evaluate_action_em(plan_ref, plan_pred)
 
-        action_em, action_em_per_ref = evaluate_action_em(action_ref, action_pred)
+        action_em, action_em_per_ref = evaluate_action_em(action_pred, action_ref)
         easy_f1_dict, hard_f1_dict, f1_dict = evaluate_action_input_f1(action_pred, action_ref, action_input_pred, action_input_ref)
 
         easy_f1_list = [item for sublist in easy_f1_dict.values() for item in sublist]
