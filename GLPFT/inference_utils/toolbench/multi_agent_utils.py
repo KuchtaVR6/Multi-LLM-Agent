@@ -14,7 +14,7 @@ def evaluate_rougel(cand_list: list, ref_list: list):
 
 def evaluate_action_em(cand_list: list, ref_list: list):
     if len(ref_list) == 0:
-        return 0
+        return 0, {}
     em = 0
     em_per_ref = defaultdict(list)
     for cand, ref in zip(cand_list, ref_list):
