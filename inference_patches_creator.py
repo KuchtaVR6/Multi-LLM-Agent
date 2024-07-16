@@ -2,6 +2,7 @@ from job_creator_gpu import jobify
 import argparse
 import os
 
+
 def create_inner_script(model_suffix):
     inner_script_path = f"../inner_scripts/infer_{model_suffix}.sh"
 
