@@ -3,11 +3,12 @@ from collections import defaultdict
 
 
 class PatchManager:
-    def __init__(self, model_suffix):
+    def __init__(self, model_suffix, trained_on_all=False):
         if not model_suffix:
             self.model_suffix = 'caller'
         else:
             self.model_suffix = model_suffix
+        self.trained_on_all = trained_on_all
         self.api_to_category = {}
         self.dir_path_to_api_name = {}
         self.patch_hierarchy = defaultdict(lambda: defaultdict(lambda: defaultdict(str)))
@@ -17,7 +18,10 @@ class PatchManager:
         self.categorize_patches()
 
     def find_all_patches(self):
-        root_directory = f'output_patches/{self.model_suffix}/'
+        base_dir = 'output_patches'
+        if self.trained_on_all:
+            base_dir += '/trained_on_all'
+        root_directory = f'{base_dir}/{self.model_suffix}/'
 
         if not os.path.exists(root_directory):
             raise FileNotFoundError(f"Error: The directory {root_directory} does not exist.")
@@ -30,6 +34,8 @@ class PatchManager:
                 last_folder = os.path.basename(dir_path)
                 if self.model_suffix != 'caller':
                     last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
+                if self.trained_on_all:
+                    last_folder = last_folder.rsplit('_', 1)[0]  # remove the 'all' suffix
                 self.dir_path_to_api_name[dir_path] = last_folder
 
 

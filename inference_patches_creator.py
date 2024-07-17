@@ -5,7 +5,7 @@ import argparse
 import os
 
 
-def create_inner_script(model_suffix):
+def create_inner_script(model_suffix, trained_on_all):
     inner_script_path = f"../inner_scripts/infer_{model_suffix}.sh"
 
     inner_script_content = f"""#!/bin/bash
@@ -27,7 +27,8 @@ python inference_utils/toolbench/infer_pipeline_patches.py \\
   --do_specific_tests True \\
   --do_specific_tests_backoff True \\
   --specific_test_sets 'all' \\
-  --model_suffix '{model_suffix}'
+  --model_suffix '{model_suffix}' \\
+  --trained_on_all {trained_on_all}
 """
 
     with open(inner_script_path, 'w') as f:
@@ -41,12 +42,14 @@ python inference_utils/toolbench/infer_pipeline_patches.py \\
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate job scripts for inference.")
     parser.add_argument("model_suffix", type=str, help="The model suffix to be used in the inference script.")
+    parser.add_argument("trained_on_all", type=bool, help="Use models trained on all samples.", default=False)
     args = parser.parse_args()
 
     model_suffix = args.model_suffix
+    trained_on_all = args.trained_on_all
 
     # Create the inner script
-    inner_script_path = create_inner_script(model_suffix)
+    inner_script_path = create_inner_script(model_suffix, trained_on_all)
 
     # Generate the job script
     jobify(inner_script_path[:-3], use_inference=True)

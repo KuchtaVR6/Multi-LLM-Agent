@@ -41,6 +41,7 @@ IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 @dataclass
 class TestArguments:
     model_suffix: Optional[str] = field(default="")
+    trained_on_all: Optional[bool] = field(default=False)
     regular_test_set: Optional[bool] = field(default=True)
     test_backoff: Optional[bool] = field(default=False)
     do_specific_tests: Optional[bool] = field(default=False)
@@ -101,7 +102,7 @@ def infer(input_files):
     )
     test_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    patch_manager = PatchManager(test_args.model_suffix)
+    patch_manager = PatchManager(test_args.model_suffix, test_args.trained_on_all)
 
     caller_model, caller_tokenizer = load_model_with_adapters_and_tokenizer(test_args.model_suffix, patch_manager)
     data_collator = Collator(caller_tokenizer, data_args)
