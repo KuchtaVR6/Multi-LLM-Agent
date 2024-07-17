@@ -31,7 +31,7 @@ class PatchManager:
                 continue    # skip loading checkpoints
             if any(file.endswith('.safetensors') for file in filenames):
                 # Get the last folder in the chain
-                last_folder = os.path.basename(dir_path)
+                last_folder = os.path.basename(dir_path).split('[', 1)[0]
                 if self.model_suffix != 'caller':
                     last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
                 if self.trained_on_all:
