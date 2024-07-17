@@ -28,7 +28,7 @@ class PatchManager:
 
         for dir_path, dir_names, filenames in os.walk(root_directory):
             if 'checkpoint-' in dir_path:
-                continue    # skip loading checkpoints
+                continue  # skip loading checkpoints
             if any(file.endswith('.safetensors') for file in filenames):
                 # Get the last folder in the chain
                 last_folder = os.path.basename(dir_path).split('[', 1)[0]
@@ -37,8 +37,6 @@ class PatchManager:
                 if self.trained_on_all:
                     last_folder = last_folder.rsplit('_', 1)[0]  # remove the 'all' suffix
                 self.dir_path_to_api_name[dir_path] = last_folder
-
-
 
     def categorize_patches(self):
         for dir_path, patch_name in self.dir_path_to_api_name.items():
@@ -72,7 +70,7 @@ class PatchManager:
             category = 'Category not found'
 
         return {
-            'category': category,
+            'category': category.lower(),
             'api_family': api_family,
             'endpoint': endpoint
         }, patch_type
@@ -96,3 +94,30 @@ class PatchManager:
 
     def all_patch_paths(self):
         return self.dir_path_to_api_name.keys()
+
+    def find_all_merge_adapters(self):
+        possible_merges = []
+
+        for category, cat_entries in self.patch_hierarchy.items():
+            # check if the category wide is present
+            if None in cat_entries and len(cat_entries) >= 2:
+                current_candidate_cat = {'lower_order': [], 'higher_order': cat_entries[None][None]}
+                for api_family, api_entries in cat_entries.items():
+                    if api_family is not None:
+                        for endpoint, endpoint_entry in api_entries.items():
+                            current_candidate_cat['lower_order'].append(endpoint_entry)
+                if len(current_candidate_cat['lower_order']) > 2:
+                    possible_merges.append(current_candidate_cat)
+
+            for api_family, api_entries in cat_entries.items():
+                if api_family is None:
+                    continue
+
+                if None in api_entries and len(api_entries) >= 3:
+                    current_candidate_api = {'lower_order': [], 'higher_order': api_entries[None]}
+                    for endpoint, endpoint_entry in api_entries.items():
+                        if endpoint is not None:
+                            current_candidate_api['lower_order'].append(endpoint_entry)
+                    possible_merges.append(current_candidate_api)
+
+        return possible_merges

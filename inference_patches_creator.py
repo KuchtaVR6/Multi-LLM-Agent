@@ -42,7 +42,7 @@ python inference_utils/toolbench/infer_pipeline_patches.py \\
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate job scripts for inference.")
     parser.add_argument("model_suffix", type=str, help="The model suffix to be used in the inference script.")
-    parser.add_argument("trained_on_all", type=bool, help="Use models trained on all samples.", default=False)
+    parser.add_argument("--trained_on_all", action='store_true', help="Use models trained on all samples.")
     args = parser.parse_args()
 
     model_suffix = args.model_suffix
