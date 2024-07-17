@@ -27,6 +27,7 @@ import torch
 import transformers
 from transformers.trainer_pt_utils import LabelSmoother
 from peft import PeftConfig, get_peft_model
+from supportedModels import get_model_path_on_suffix
 
 import gc
 
@@ -49,15 +50,8 @@ class TestArguments:
     specific_test_sets: Optional[str] = field(default="certain")
 
 
-def load_model_with_adapters_and_tokenizer(model_suffix, patch_manager):
-    if model_suffix == 'llama':
-        model_name_or_path = "meta-llama/Llama-2-7b-hf"
-    elif model_suffix == 'dev':
-        model_name_or_path = "EleutherAI/pythia-160m"
-    elif model_suffix:
-        model_name_or_path = f"saved_models/{model_suffix}"
-    else:
-        model_name_or_path = "saved_models/caller"
+def load_model_with_adapters_and_tokenizer(model_suffix, list_of_patch_paths):
+    model_name_or_path = get_model_path_on_suffix(model_suffix)
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
     model = transformers.AutoModelForCausalLM.from_pretrained(
@@ -69,7 +63,7 @@ def load_model_with_adapters_and_tokenizer(model_suffix, patch_manager):
 
     peftified_models = False
 
-    for patch_dir in tqdm(patch_manager.all_patch_paths()):
+    for patch_dir in tqdm(list_of_patch_paths):
         current_config = PeftConfig.from_pretrained(patch_dir)
         if not peftified_models:
             model = get_peft_model(model, current_config, adapter_name=patch_dir)
@@ -104,7 +98,8 @@ def infer(input_files):
 
     patch_manager = PatchManager(test_args.model_suffix, test_args.trained_on_all)
 
-    caller_model, caller_tokenizer = load_model_with_adapters_and_tokenizer(test_args.model_suffix, patch_manager)
+    caller_model, caller_tokenizer = load_model_with_adapters_and_tokenizer(test_args.model_suffix,
+                                                                            patch_manager.all_patch_paths())
     data_collator = Collator(caller_tokenizer, data_args)
     caller_trainer = TrainerForPred(
         model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
