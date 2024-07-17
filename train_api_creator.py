@@ -5,7 +5,7 @@ import json
 import sys
 
 from job_creator_gpu import jobify
-
+from GLPFT.supportedModels import get_model_path_on_suffix
 
 def create_script_content(input_model, data_path, exp_name, epochs, bsz, ga, context_length, use_lora, filename,
                           target_modules=None):
@@ -63,12 +63,7 @@ def merge_patch_and_save(model_suffix, patch_path, output_dir):
     if model_suffix is None:
         model_suffix = 'caller'
 
-    if model_suffix == 'llama':
-        model_name_or_path = "meta-llama/Llama-2-7b-hf"
-    elif model_suffix == 'dev':
-        model_name_or_path = "EleutherAI/pythia-160m"
-    else:
-        model_name_or_path = f'saved_models/{model_suffix}'
+    model_name_or_path = get_model_path_on_suffix(model_suffix)
 
     if '_all' in patch_path:
         full_patch_path = patch_path.replace('/', f'/all/', 1)
