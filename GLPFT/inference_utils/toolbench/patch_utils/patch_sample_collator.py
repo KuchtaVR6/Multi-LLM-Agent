@@ -99,7 +99,7 @@ def build_caller_infer_samples(raw_data, planner_prompt_type):
                             'instruction': d['instruction'],
                             'history': c[:j],
                             'dispath': copy.deepcopy(dispatch),
-                            'model_input_for_caller': prompt + ' assistant: ',
+                            'model_input_for_caller': d['input'],
                             'reference': reference,
                             'caller_sample_id': len(conversations),  # easier identification
                             'caller_tool_requested': mentioned_tool,
