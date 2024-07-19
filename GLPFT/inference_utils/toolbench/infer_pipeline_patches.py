@@ -31,9 +31,9 @@ from supportedModels import get_model_path_on_suffix
 
 import gc
 
-from infer_pipeline import DataArguments, TrainingArguments, InferDataset, Collator
-from patch_utils.patch_manager import PatchManager
-from patch_utils.patch_sample_collator import PatchAndSampleCollator
+from inference_utils.toolbench.infer_pipeline import DataArguments, TrainingArguments, InferDataset, Collator
+from inference_utils.toolbench.patch_utils.patch_manager import PatchManager
+from inference_utils.toolbench.patch_utils.patch_sample_collator import PatchAndSampleCollator
 from utils.trainer_utils import TrainerForPred
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
