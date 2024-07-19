@@ -2,14 +2,21 @@
 
 set -e
 
-echo "Creating the environment"
+echo "Creating the environment for training"
 
-if ! conda env create -f api_expert_env.yml -y; then
-  echo "Error: Failed to create the conda environment from api_expert_env.yml"
+if ! conda env create -f train_env.yml -y; then
+  echo "Error: Failed to create the conda environment from train_env.yml"
   exit 1
 fi
 
-if ! conda activate api_expert_env; then
+echo "Creating the environment for inferencing"
+
+if ! conda env create -f inference_env.yml -y; then
+  echo "Error: Failed to create the conda environment from train_env.yml"
+  exit 1
+fi
+
+if ! conda activate api_expert_train; then
   echo "Error: Failed to activate the conda environment"
   exit 1
 fi
