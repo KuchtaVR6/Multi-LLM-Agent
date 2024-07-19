@@ -48,6 +48,6 @@ if __name__ == '__main__':
                                    adapter_name=merge["output_name"])
         for part in parts:
             model.delete_adapter(part)
-        model.save_pretrained(f'/output_patches/{model_suffix}/{merge["output_name"]}')
+        model.save_pretrained(f'output_patches/{model_suffix}/{merge["output_name"]}')
 
 
