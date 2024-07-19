@@ -2,6 +2,7 @@ import argparse
 
 import numpy as np
 
+from tqdm import tqdm
 from inference_utils.toolbench.patch_utils.patch_manager import PatchManager
 from inference_utils.toolbench.infer_pipeline_patches import load_model_with_adapters_and_tokenizer
 
@@ -39,11 +40,12 @@ if __name__ == '__main__':
                 'parts': entry['lower_order']
             })
 
-    for merge in to_be_merged:
+    for merge in tqdm(to_be_merged):
         parts = merge['parts']
         model, token = load_model_with_adapters_and_tokenizer(model_suffix, parts)
         merge_length = len(parts)
-        model.add_weighted_adapter(merge['parts'], np.full(merge_length, 1/merge_length), combination_type="linear")
+        model.add_weighted_adapter(merge['parts'], np.full(merge_length, 1/merge_length), combination_type="linear",
+                                   adapter_name=merge["output_name"])
         for part in parts:
             model.delete_adapter(part)
         model.save_pretrained(f'/output_patches/{model_suffix}/{merge["output_name"]}')
