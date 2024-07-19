@@ -45,7 +45,7 @@ if __name__ == '__main__':
         model, token = load_model_with_adapters_and_tokenizer(model_suffix, parts)
         merge_length = len(parts)
         model.add_weighted_adapter(merge['parts'], np.full(merge_length, 1/merge_length), combination_type="linear",
-                                   adapter_name=merge["output_name"])
+                                   adapter_name="default")
         for part in parts:
             model.delete_adapter(part)
         model.save_pretrained(f'output_patches/{model_suffix}/{merge["output_name"]}')
