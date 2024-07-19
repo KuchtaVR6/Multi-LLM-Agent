@@ -1,13 +1,15 @@
 import json
 import os.path
 from collections import defaultdict
+
+from inference_utils.toolbench.patch_utils.patch_manager import PatchManager
 from utils.prompt_lib import prompt_dict
 import copy
 from utils.tool_classifier import ToolClassifier
 
 
 class PatchAndSampleCollator():
-    def __init__(self, patch_manager, planner_prompt_type):
+    def __init__(self, patch_manager: PatchManager, planner_prompt_type):
         self.patch_manager = patch_manager
         self.patch_to_samples = defaultdict(list)
         self.all_samples = []
