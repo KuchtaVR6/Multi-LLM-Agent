@@ -30,7 +30,7 @@ def load_api_to_category(file_path):
     return api_to_category
 
 # Load the API to Category mapping once
-api_to_category = load_api_to_category('dataset/toolbench/api_categories.txt')
+api_to_category = load_api_to_category('dataset/toolbench/proper_api_categories.txt')
 
 def find_api_category(api_name):
     category = api_to_category.get(api_name, "Category not found")

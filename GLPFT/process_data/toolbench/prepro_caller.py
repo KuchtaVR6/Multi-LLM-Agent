@@ -181,7 +181,7 @@ def lower_and_replace_punctuation(text):
 
 
 # Load the API to Category mapping once
-api_to_category = load_api_to_category('dataset/toolbench/api_categories.txt')
+api_to_category = load_api_to_category('dataset/toolbench/proper_api_categories.txt')
 
 
 def find_api_category(api_name):
