@@ -135,7 +135,7 @@ download_data "https://drive.usercontent.google.com/download?id=1XFjDxVZdUY7TXYF
 unzip_data "data.zip" "data"
 prepare_data_directories
 
-cd GLPFT || { echo "Error: Directory 'GLPFT/dataset/toolbench' does not exist"; return; }
+cd GLPFT || { echo "Error: Directory 'GLPFT' does not exist"; return; }
 
 run_python_scripts
 install_git_lfs
