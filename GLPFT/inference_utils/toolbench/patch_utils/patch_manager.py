@@ -27,8 +27,8 @@ class PatchManager:
             raise FileNotFoundError(f"Error: The directory {root_directory} does not exist.")
 
         for dir_path, dir_names, filenames in os.walk(root_directory):
-            if 'checkpoint-' in dir_path:
-                continue  # skip loading checkpoints
+            if 'checkpoint-' in dir_path or dir_path.endswith('_bad_labels'):
+                continue  # skip loading checkpoints and models on old data
             if any(file.endswith('.safetensors') for file in filenames):
                 # Get the last folder in the chain
                 last_folder = os.path.basename(dir_path).split('[', 1)[0]

@@ -50,8 +50,8 @@ if __name__ == "__main__":
 
             target_filename = f'{test_type}_expert_predictions.json'
             backoff_filename = f'{test_type}_backoff_predictions.json'
-            if 'checkpoint-' in dir_path:
-                continue  # skip loading checkpoints
+            if 'checkpoint-' in dir_path or dir_path.endswith('_bad_labels'):
+                continue  # skip loading checkpoints and models on old data
             if any(file.endswith('.safetensors') for file in filenames):
                 if target_filename in filenames:
                     if backoff_filename in filenames:
