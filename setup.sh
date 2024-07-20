@@ -58,6 +58,8 @@ prepare_data_directories() {
     echo "Error: 'data' directory does not exist"
   fi
 
+  cd ..
+
   mkdir -p GLPFT/dataset/toolbench/train/raw_data
 }
 
@@ -133,7 +135,7 @@ download_data "https://drive.usercontent.google.com/download?id=1XFjDxVZdUY7TXYF
 unzip_data "data.zip" "data"
 prepare_data_directories
 
-cd GLPFT/dataset/toolbench || { echo "Error: Directory 'GLPFT/dataset/toolbench' does not exist"; return; }
+cd GLPFT || { echo "Error: Directory 'GLPFT/dataset/toolbench' does not exist"; return; }
 
 run_python_scripts
 install_git_lfs
