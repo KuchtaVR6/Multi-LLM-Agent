@@ -44,7 +44,7 @@ class PatchManager:
             self.patch_hierarchy[hierarchy['category']][hierarchy['api_family']][hierarchy['endpoint']] = dir_path
 
     def parse_api_categories(self):
-        with open('dataset/toolbench/api_categories.txt', 'r') as f:
+        with open('dataset/toolbench/proper_api_categories.txt', 'r') as f:
             for line in f:
                 api_fam, category = line.strip().split(': ')
                 self.api_to_category[api_fam] = category
