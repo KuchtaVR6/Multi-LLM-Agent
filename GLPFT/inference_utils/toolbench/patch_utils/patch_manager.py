@@ -36,8 +36,10 @@ class PatchManager:
                     last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
                 if self.trained_on_all:
                     last_folder = last_folder.rsplit('_', 1)[0]  # remove the 'all' suffix
+                print(f'~{last_folder}~')
                 if last_folder.endswith('_merged'):
                     last_folder = last_folder[:-len('_merged')]
+                print(f'~{last_folder}~')
                 self.dir_path_to_api_name[dir_path] = last_folder
 
     def categorize_patches(self):
