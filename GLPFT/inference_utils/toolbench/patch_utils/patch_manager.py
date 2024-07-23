@@ -106,7 +106,7 @@ class PatchManager:
                     if api_family is not None:
                         for endpoint, endpoint_entry in api_entries.items():
                             current_candidate_cat['lower_order'].append(endpoint_entry)
-                if len(current_candidate_cat['lower_order']) > 2:
+                if len(current_candidate_cat['lower_order']) >= 2:
                     possible_merges.append(current_candidate_cat)
 
             for api_family, api_entries in cat_entries.items():
