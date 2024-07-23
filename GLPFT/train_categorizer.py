@@ -20,7 +20,7 @@ def load_data(file_path):
 def tokenize_data(data, tokenizer):
     inputs = []
     targets = []
-    for item in data:
+    for item in tqdm(data):
         encoded_input = tokenizer(
             item['input'],
             padding='max_length',
