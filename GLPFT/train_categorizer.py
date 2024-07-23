@@ -7,7 +7,6 @@ from transformers import LongformerModel, LongformerTokenizer, AdamW
 from tqdm import tqdm
 import argparse
 from utils.data_split import train_validation_split
-import numpy as np
 
 
 # Load data from a JSON file
@@ -31,7 +30,7 @@ def tokenize_data(data, tokenizer):
         )
         inputs.append(encoded_input)
         targets.append(item['target'])
-    return np.array(inputs), np.array(targets)
+    return inputs, targets
 
 
 class TextClassificationDataset(Dataset):
