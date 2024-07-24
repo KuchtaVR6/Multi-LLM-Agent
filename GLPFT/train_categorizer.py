@@ -72,11 +72,15 @@ def evaluate(model, dataloader, device):
     return accuracy
 
 
-def train(model, train_dataloader, optimizer, loss_fn, device, num_epochs):
+def train(model, train_dataloader, optimizer, loss_fn, device, num_epochs, gradient_accumulation_steps,
+          report_interval=10):
     model.train()
     for epoch in range(num_epochs):
         total_loss = 0
-        for batch in tqdm(train_dataloader):
+        running_loss = 0
+        optimizer.zero_grad()
+
+        for step, batch in enumerate(tqdm(train_dataloader)):
             input_ids, attention_mask, targets = [x.to(device) for x in batch]
 
             # Forward pass
@@ -85,14 +89,23 @@ def train(model, train_dataloader, optimizer, loss_fn, device, num_epochs):
 
             # Compute loss
             loss = loss_fn(logits, targets)
-            total_loss += loss.item()
+            loss = loss / gradient_accumulation_steps  # Normalize loss
 
-            print(loss.item())
-
-            # Backward pass and optimization
-            optimizer.zero_grad()
+            # Backward pass
             loss.backward()
-            optimizer.step()
+
+            if (step + 1) % gradient_accumulation_steps == 0:
+                optimizer.step()
+                optimizer.zero_grad()
+
+            total_loss += loss.item() * gradient_accumulation_steps
+            running_loss += loss.item() * gradient_accumulation_steps
+
+            # Report loss at intervals
+            if (step + 1) % report_interval == 0:
+                avg_running_loss = running_loss / report_interval
+                print(f"Epoch {epoch + 1}, Step {step + 1}, Loss: {avg_running_loss:.4f}")
+                running_loss = 0  # Reset running loss
 
             torch.cuda.empty_cache()
 
@@ -112,6 +125,7 @@ def parse_args():
     parser.add_argument("--num_epochs", type=int, help="Number of epochs for training.")
     parser.add_argument("--model_save_path", type=str, help="Path to save the trained model.")
     parser.add_argument("--learning_rate", type=float, default=5e-5, help="Learning rate for the optimizer.")
+    parser.add_argument("--gradient_accumulation_steps", type=int, default=2, help="Number of steps to accumulate gradients before updating.")
     return parser.parse_args()
 
 
@@ -178,7 +192,7 @@ def main():
     loss_fn = CrossEntropyLoss()
 
     # Train the model
-    train(model, train_dataloader, optimizer, loss_fn, device, args.num_epochs)
+    train(model, train_dataloader, optimizer, loss_fn, device, args.num_epochs, args.gradient_accumulation_steps)
 
     # Evaluate
     accuracy = evaluate(model, val_dataloader, device)
