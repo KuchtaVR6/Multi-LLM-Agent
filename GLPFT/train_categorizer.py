@@ -87,6 +87,8 @@ def train(model, train_dataloader, optimizer, loss_fn, device, num_epochs):
             loss = loss_fn(logits, targets)
             total_loss += loss.item()
 
+            print(loss.item())
+
             # Backward pass and optimization
             optimizer.zero_grad()
             loss.backward()
