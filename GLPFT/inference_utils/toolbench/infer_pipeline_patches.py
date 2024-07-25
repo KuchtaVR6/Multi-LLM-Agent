@@ -143,6 +143,7 @@ def infer(input_files):
             json.dump(samples, f, indent=4)
 
     if test_args.do_specific_tests_backoff:
+        caller_model.disable_adapter_layers()
         print('Predicting the Expert Specific Test sets on backoff...')
         for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
             target_filepath = os.path.join(patch, f'{test_args.specific_test_sets}_backoff_predictions.json')
