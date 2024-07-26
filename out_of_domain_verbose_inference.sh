@@ -7,7 +7,7 @@ CAL_PATH="shenwzh3/alpha-umi-caller-7b"
 SUM_PATH="shenwzh3/alpha-umi-summarizer-7b"
 
 
-LAB_DIR=output_res_verbose/toolbench
+LAB_DIR=ood_output_res_verbose/toolbench
 P_TYPE_PLAN=toolbench_planner
 P_TYPE_CAL=toolbench_caller
 P_TYPE_SUM=toolbench_summarizer
