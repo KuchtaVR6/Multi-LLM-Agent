@@ -15,7 +15,6 @@
 /**/output_verbose_res
 /**/output_pathes
 /**/output_patches
-/**/output_verbose_res
 /**/saved_models
 .DS_Store
 assets/.DS_Store
@@ -23,3 +22,4 @@ assets/.DS_Store
 /**/*_scrape.py
 /GLPFT/output_verbose_res/
 /GLPFT/classification_fail_log.json
+/GLPFT/ood_output_res_verbose/
