@@ -66,24 +66,19 @@ def merge_patch_and_save(model_suffix, patch_path, output_dir):
     model_name_or_path = get_model_path_on_suffix(model_suffix)
 
     if '_all' in patch_path:
-        full_patch_path = patch_path.replace('/', f'/all/', 1)
+        full_patch_path = patch_path.replace('/', f'/trained_on_all/{model_suffix}/', 1)
     else:
         full_patch_path = patch_path.replace('/', f'/{model_suffix}/', 1)
     current_config = PeftConfig.from_pretrained(full_patch_path)
 
-    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_name_or_path
     )
-    if tokenizer.pad_token_id == None:
-        tokenizer.add_special_tokens({"bos_token": "<s>", "eos_token": "</s>", "pad_token": "<pad>"})
-        model.resize_token_embeddings(len(tokenizer))
 
     model = get_peft_model(model, current_config)
 
     merged_model = model.merge_and_unload()
     merged_model.save_pretrained(output_dir)
-    tokenizer.save_pretrained(output_dir)
 
 
 def main(api_name, model='caller', all_apis=False):
@@ -151,6 +146,9 @@ def main(api_name, model='caller', all_apis=False):
                     path_to_patch = previous_target + '_' + previous_base
                 patch_dir = 'output_patches/' + path_to_patch + '/'
                 output_dir = 'saved_models/' + model + '/'
+
+                if '_all' in patch_dir:
+                    output_dir.replace('/', '/trained_on_all/', 1)
 
                 if not os.path.exists(output_dir):
                     print('pre-training merge...')
