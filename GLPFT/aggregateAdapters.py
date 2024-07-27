@@ -48,6 +48,11 @@ if __name__ == '__main__':
                                    adapter_name="default")
         for part in parts:
             model.delete_adapter(part)
-        model.save_pretrained(f'output_patches/{model_suffix}/{merge["output_name"]}')
+
+        output_dir = f'output_patches/{model_suffix}/{merge["output_name"]}'
+        if trained_on_all:
+            output_dir.replace('/', '/trained_on_all/', 1)
+
+        model.save_pretrained(output_dir)
 
 
