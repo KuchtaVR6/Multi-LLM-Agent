@@ -1,7 +1,7 @@
 import json
 
 # Define the path to the JSON file
-file_path = 'ood_verbose_output/inputs_for_caller.json'
+file_path = 'ood_output_res_verbose/inputs_for_caller.json'
 
 # Load the JSON data from the file
 with open(file_path, 'r') as file:
