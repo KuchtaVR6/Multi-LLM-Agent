@@ -148,7 +148,7 @@ def main(api_name, model='caller', all_apis=False):
                 output_dir = 'saved_models/' + model + '/'
 
                 if all_apis:
-                    output_dir.replace('/', '/trained_on_all/', 1)
+                    output_dir = output_dir.replace('/', '/trained_on_all/', 1)
 
                 if not os.path.exists(output_dir):
                     print('pre-training merge...')
