@@ -133,9 +133,13 @@ def infer(input_files):
             with open(target_filepath, 'w') as f:
                 json.dump(samples, f, indent=4)
 
+    # remove all adapters from the model before the backoff tests
+    caller_model.disable_adapter_layers()
+    for adapter in patch_manager.all_patch_paths():
+        caller_model.delete_adapter(adapter)
+
     if test_args.test_backoff:
         print('Predicting the Toolbench Test sets on backoff...')
-        caller_model.disable_adapter_layers()
         samples = infer_on_samples(collator.all_samples, caller_trainer, caller_tokenizer, data_args)
         os.makedirs(training_args.output_dir, exist_ok=True)
 
@@ -143,7 +147,6 @@ def infer(input_files):
             json.dump(samples, f, indent=4)
 
     if test_args.do_specific_tests_backoff:
-        caller_model.disable_adapter_layers()
         print('Predicting the Expert Specific Test sets on backoff...')
         for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
             target_filepath = os.path.join(patch, f'{test_args.specific_test_sets}_backoff_predictions.json')
