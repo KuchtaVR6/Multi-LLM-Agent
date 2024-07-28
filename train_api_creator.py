@@ -147,7 +147,7 @@ def main(api_name, model='caller', all_apis=False):
                 patch_dir = 'output_patches/' + path_to_patch + '/'
                 output_dir = 'saved_models/' + model + '/'
 
-                if '_all' in patch_dir:
+                if all_apis:
                     output_dir.replace('/', '/trained_on_all/', 1)
 
                 if not os.path.exists(output_dir):
