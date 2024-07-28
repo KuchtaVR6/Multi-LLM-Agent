@@ -160,8 +160,8 @@ def main(api_name, model='caller', all_apis=False):
                 exp_name = doubly_patched_output(model, api_name, all_apis)
 
     if certainty == 'all':
-        exp_name = exp_name.rstrip('/') + '_all/'
-        # filename += '_all'
+        # exp_name = exp_name.rstrip('/') + '_all/'
+        filename += '_all'
         model_folder_out = 'trained_on_all/' + model
     else:
         model_folder_out = model
