@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
         output_dir = f'output_patches/{model_suffix}/{merge["output_name"]}'
         if trained_on_all:
-            output_dir.replace('/', '/trained_on_all/', 1)
+            output_dir = output_dir.replace('/', '/trained_on_all/', 1)
 
         model.save_pretrained(output_dir)
 

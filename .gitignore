@@ -23,3 +23,5 @@ assets/.DS_Store
 /GLPFT/output_verbose_res/
 /GLPFT/classification_fail_log.json
 /GLPFT/ood_output_res_verbose/
+/GLPFT/requests.json
+/GLPFT/download_ood.sh
