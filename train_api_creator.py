@@ -65,10 +65,12 @@ def merge_patch_and_save(model_suffix, patch_path, output_dir):
 
     model_name_or_path = get_model_path_on_suffix(model_suffix)
 
-    if '_all' in patch_path and 'trained_on_all' not in patch_path:
+    if '_all' in patch_path:
         full_patch_path = patch_path.replace('/', f'/trained_on_all/{model_suffix}/', 1)
     else:
         full_patch_path = patch_path.replace('/', f'/{model_suffix}/', 1)
+
+    print(full_patch_path)
     current_config = PeftConfig.from_pretrained(full_patch_path)
 
     model = transformers.AutoModelForCausalLM.from_pretrained(
@@ -148,7 +150,6 @@ def main(api_name, model='caller', all_apis=False):
                 output_dir = 'saved_models/' + model + '/'
 
                 if all_apis:
-                    patch_dir = patch_dir.replace('/', '/trained_on_all/', 1)
                     output_dir = output_dir.replace('/', '/trained_on_all/', 1)
 
                 if not os.path.exists(output_dir):
