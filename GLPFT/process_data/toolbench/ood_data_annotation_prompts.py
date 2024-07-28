@@ -1,13 +1,12 @@
 import json
 
 # Define the path to the JSON file
-file_path = 'ood_output_res_verbose/inputs_for_caller.json'
+file_path = 'ood_output_res_verbose/toolbench/inputs_for_caller.json'
 
 # Load the JSON data from the file
 with open(file_path, 'r') as file:
     data = json.load(file)
 
-# Use a dictionary to track unique tools by the part after "_for_"
 unique_tools = {}
 for entry in data:
     for tool in entry.get('tools', []):
@@ -16,7 +15,7 @@ for entry in data:
 
         if tool_name and '_for_' in tool_name:
             # Split the tool name
-            parts = tool_name.split('_for_')
+            parts = tool_name.split('_for_', 1)
             if len(parts) == 2:
                 name_part, identifier = parts
                 identifier = identifier.strip()
@@ -64,7 +63,7 @@ for identifier, data in unique_tools.items():
         "method": "POST",
         "url": "/v1/chat/completions",
         "body": {
-            "model": "gpt-3.5-turbo",
+            "model": "gpt-4-turbo",
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}
@@ -75,8 +74,9 @@ for identifier, data in unique_tools.items():
     char_count += len(prompt) + 20
     requests.append(request)
 
-# Save to JSON file
-with open('requests.json', 'w') as file:
-    json.dump(requests, file, indent=4)
+# Save to JSON Lines file
+with open('requests.jsonl', 'w') as file:
+    for request in requests:
+        file.write(json.dumps(request) + '\n')
 
-print(f"Requests saved to requests.json, charcount: {char_count}")
+print(f"Requests saved to requests.jsonl, charcount: {char_count}")
