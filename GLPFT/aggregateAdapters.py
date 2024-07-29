@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     for merge in tqdm(to_be_merged):
         parts = merge['parts']
-        model, token = load_model_with_adapters_and_tokenizer(model_suffix, parts)
+        model, token = load_model_with_adapters_and_tokenizer(model_suffix, parts, trained_on_all)
         merge_length = len(parts)
         model.add_weighted_adapter(merge['parts'], np.full(merge_length, 1/merge_length), combination_type="linear",
                                    adapter_name="default")

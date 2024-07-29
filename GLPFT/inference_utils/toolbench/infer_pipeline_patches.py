@@ -50,8 +50,8 @@ class TestArguments:
     specific_test_sets: Optional[str] = field(default="certain")
 
 
-def load_model_with_adapters_and_tokenizer(model_suffix, list_of_patch_paths):
-    model_name_or_path = get_model_path_on_suffix(model_suffix)
+def load_model_with_adapters_and_tokenizer(model_suffix, list_of_patch_paths, trained_on_all=False):
+    model_name_or_path = get_model_path_on_suffix(model_suffix, trained_on_all)
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
     model = transformers.AutoModelForCausalLM.from_pretrained(
@@ -99,7 +99,9 @@ def infer(input_files):
     patch_manager = PatchManager(test_args.model_suffix, test_args.trained_on_all)
 
     caller_model, caller_tokenizer = load_model_with_adapters_and_tokenizer(test_args.model_suffix,
-                                                                            patch_manager.all_patch_paths())
+                                                                            patch_manager.all_patch_paths(),
+                                                                            test_args.trained_on_all)
+
     data_collator = Collator(caller_tokenizer, data_args)
     caller_trainer = TrainerForPred(
         model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
