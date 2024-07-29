@@ -28,5 +28,4 @@ python inference_utils/toolbench/infer_pipeline.py \
     --summarizer_prompt_type $P_TYPE_SUM \
     --max_input_length 3750 \
     --output_dir $LAB_DIR \
-    --num_infer_samples 2 \
     --verbose_outputs True
