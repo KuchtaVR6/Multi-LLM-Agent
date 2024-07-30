@@ -34,11 +34,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # specific datasets
-
     os.makedirs(args.output_path, exist_ok=True)
 
-    for test_type in ['all']:  # ['all', 'certain']: TODO REVERT, for now priority on all
+    # specific datasets
+    for test_type in ['all']:
         lines = []
 
         for dir_path, dir_names, filenames in os.walk(args.input_path_folder):
@@ -90,3 +89,35 @@ if __name__ == "__main__":
             lines.append(current_lines)
 
     nice_two_format_output(lines, 'test_toolbench')
+
+    # toolalpaca datasets
+    lines = []
+
+    for dir_path, dir_names, filenames in os.walk(args.input_path_folder):
+        current_lines = []
+
+
+        def output(line):
+            current_lines.append(line)
+
+
+        target_filename = f'alpaca_expert_predictions.json'
+        backoff_filename = f'alpaca_backoff_predictions.json'
+        if 'checkpoint-' in dir_path or dir_path.endswith('_bad_labels') or 'dev' in dir_path:
+            continue  # skip loading checkpoints and models on old data
+        if any(file.endswith('.safetensors') for file in filenames):
+            if target_filename in filenames:
+                if backoff_filename in filenames:
+                    output(f'Adapter: {dir_path}')
+                    evaluate(os.path.join(dir_path, target_filename),
+                             os.path.join(dir_path, backoff_filename),
+                             False, False, output_func=output)
+                else:
+                    print(f'[MAJOR WARNING] >>> alpaca BACKOFF MISSING FOR {dir_path}')
+            else:
+                print(f'[MAJOR WARNING] >>> alpaca PREDICTIONS MISSING FOR {dir_path}')
+
+        if len(current_lines) > 2:
+            lines.append(current_lines)
+
+    nice_two_format_output(lines, f'test_alpaca_{test_type}')
