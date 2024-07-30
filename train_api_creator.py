@@ -207,7 +207,8 @@ def main(api_name, model='caller', all_apis=False):
     sample_count = num_samples * epochs
 
     print(
-        f"Script {filename}.sh has been created and made executable. It is configured to train the model '{model}' using data for the API '{api_name}'. {sample_count} training samples will be seen during training.")
+        f"Script {filename}.sh has been created and made executable. It is configured to train the model '{model}' "
+        f"using data for the API '{api_name}'. {sample_count} training samples will be seen during training.")
 
     return filename
 
