@@ -150,7 +150,7 @@ def main(api_name, model='caller', all_apis=False):
                 if previous_base == 'caller':
                     path_to_patch = previous_target
                 if previous_target.endswith('_all'):
-                    path_to_patch = previous_target.replace('_all','', 1) + '_' + previous_base + '_all'
+                    path_to_patch = previous_target + '_' + previous_base + '_all'
                 else:
                     path_to_patch = previous_target + '_' + previous_base
                 patch_dir = 'output_patches/' + path_to_patch + '/'
