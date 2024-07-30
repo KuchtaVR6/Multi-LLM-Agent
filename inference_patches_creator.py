@@ -26,6 +26,8 @@ python inference_utils/toolbench/infer_pipeline_patches.py \\
   --test_backoff False \\
   --do_specific_tests True \\
   --do_specific_tests_backoff True \\
+  --do_toolalpaca_tests False \\
+  --do_toolalpaca_tests_backoff False \\
   --specific_test_sets 'all' \\
   --model_suffix '{model_suffix}' \\
   --trained_on_all {trained_on_all}
