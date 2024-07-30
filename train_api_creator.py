@@ -149,7 +149,7 @@ def main(api_name, model='caller', all_apis=False):
                     previous_base = initial_base_model
                 if previous_base == 'caller':
                     path_to_patch = previous_target
-                if '_all' in previous_target:
+                if previous_target.endswith('_all'):
                     path_to_patch = previous_target.replace('_all','') + previous_base + '_all'
                 else:
                     path_to_patch = previous_target + '_' + previous_base
