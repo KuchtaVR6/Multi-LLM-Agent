@@ -63,7 +63,7 @@ def merge_patch_and_save(model_suffix, patch_path, output_dir):
     if model_suffix is None:
         model_suffix = 'caller'
 
-    model_name_or_path = get_model_path_on_suffix(model_suffix)
+    model_name_or_path = get_model_path_on_suffix(model_suffix, '_all]' in model_suffix)
 
     if '_all' in patch_path:
         full_patch_path = patch_path.replace('/', f'/trained_on_all/{model_suffix}/', 1)
