@@ -23,9 +23,6 @@ class PatchAndSampleCollatorSpecific(PatchAndSampleCollator):
             processed = build_caller_infer_samples(loaded_samples, self.planner_prompt_type)
             self.patch_to_samples[expert_path] = processed
 
-    def __iter__(self):
-        return PSCIterator(self.patch_to_samples, self.patch_manager.dir_path_to_api_name)
-
 def build_caller_infer_samples(raw_data, planner_prompt_type):
     conversations = []
     prompt_temp = prompt_dict[planner_prompt_type]
