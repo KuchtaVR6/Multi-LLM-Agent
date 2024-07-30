@@ -29,6 +29,7 @@ from transformers.trainer_pt_utils import LabelSmoother
 from peft import PeftConfig, get_peft_model
 
 from inference_utils.toolbench.patch_utils.patch_sample_collator_specific import PatchAndSampleCollatorSpecific
+from inference_utils.toolbench.patch_utils.patch_sample_collator_toolalpaca import PatchAndSampleCollatorAlpaca
 from inference_utils.toolbench.patch_utils.patch_sample_collator_toolbench import PatchAndSampleCollatorToolbench
 from supportedModels import get_model_path_on_suffix
 
@@ -49,6 +50,8 @@ class TestArguments:
     test_backoff: Optional[bool] = field(default=False)
     do_specific_tests: Optional[bool] = field(default=False)
     do_specific_tests_backoff: Optional[bool] = field(default=True)
+    do_toolalpaca_tests: Optional[bool] = field(default=False)
+    do_toolalpaca_tests_backoff: Optional[bool] = field(default=True)
     specific_test_sets: Optional[str] = field(default="certain")
 
 
@@ -112,30 +115,31 @@ def infer():
     toolbench_collator = PatchAndSampleCollatorToolbench(patch_manager, data_args.planner_prompt_type)
     specific_collator = PatchAndSampleCollatorSpecific(patch_manager, data_args.planner_prompt_type,
                                                        test_args.specific_test_sets)
+    toolalpaca_collator = PatchAndSampleCollatorAlpaca(patch_manager, data_args.planner_prompt_type)
+
+    def infer_all_from_collator_and_save(collator, file_name, set_adapter=True):
+        for patch, api_name, samples in collator:
+            target_filepath = os.path.join(patch, f'{file_name}_predictions.json')
+            if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
+                continue
+            if set_adapter:
+                caller_model.set_adapter(patch)
+            samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
+
+            with open(target_filepath, 'w') as f:
+                json.dump(samples, f, indent=4)
 
     if test_args.regular_test_set:
         print('Predicting the ToolBench Test set...')
-        for patch, api_name, samples in toolbench_collator:
-            target_filepath = os.path.join(patch, f'toolbench_expert_predictions.json')
-            if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
-                continue
-            caller_model.set_adapter(patch)
-            samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
-
-            with open(target_filepath, 'w') as f:
-                json.dump(samples, f, indent=4)
+        infer_all_from_collator_and_save(toolbench_collator, 'toolbench_expert')
 
     if test_args.do_specific_tests:
         print('Predicting the Expert Specific Test sets...')
-        for patch, api_name, samples in specific_collator:
-            target_filepath = os.path.join(patch, f'{test_args.specific_test_sets}_expert_predictions.json')
-            if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
-                continue
-            caller_model.set_adapter(patch)
-            samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
+        infer_all_from_collator_and_save(specific_collator, f'{test_args.specific_test_sets}_expert')
 
-            with open(target_filepath, 'w') as f:
-                json.dump(samples, f, indent=4)
+    if test_args.do_toolalpaca_tests:
+        print('Predicting the Toolalpaca Test sets on experts...')
+        infer_all_from_collator_and_save(toolalpaca_collator, 'alpaca_expert')
 
     # remove all adapters from the model before the backoff tests
     caller_model.disable_adapter_layers()
@@ -144,22 +148,15 @@ def infer():
 
     if test_args.test_backoff:
         print('Predicting the Toolbench Test sets on backoff...')
-        samples = infer_on_samples(toolbench_collator.all_samples, caller_trainer, caller_tokenizer, data_args)
-        os.makedirs(training_args.output_dir, exist_ok=True)
-
-        with open(os.path.join(training_args.output_dir, 'toolbench_backoff_predictions.json'), 'w') as f:
-            json.dump(samples, f, indent=4)
+        infer_all_from_collator_and_save(toolbench_collator, 'toolbench_backoff', False)
 
     if test_args.do_specific_tests_backoff:
         print('Predicting the Expert Specific Test sets on backoff...')
-        for patch, api_name, samples in specific_collator:
-            target_filepath = os.path.join(patch, f'{test_args.specific_test_sets}_backoff_predictions.json')
-            if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
-                continue
+        infer_all_from_collator_and_save(specific_collator, f'{test_args.specific_test_sets}_backoff', False)
 
-            samples = infer_on_samples(samples, caller_trainer, caller_tokenizer, data_args)
-            with open(target_filepath, 'w') as f:
-                json.dump(samples, f, indent=4)
+    if test_args.do_toolalpaca_tests_backoff:
+        print('Predicting the Toolalpaca Test sets on backoff...')
+        infer_all_from_collator_and_save(toolalpaca_collator, 'alpaca_backoff', False)
 
     caller_model.to('cpu')
     caller_trainer.model.to('cpu')
