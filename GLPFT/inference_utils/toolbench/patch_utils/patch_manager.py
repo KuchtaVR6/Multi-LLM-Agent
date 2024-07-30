@@ -51,6 +51,11 @@ class PatchManager:
                 api_fam, category = line.strip().split(': ')
                 self.api_to_category[api_fam] = category
 
+        with open('dataset/toolbench/toolalpaca_api_categories.txt', 'r') as f:
+            for line in f:
+                api_fam, category = line.strip().split(': ')
+                self.api_to_category[api_fam] = category
+
     def parse_patch_name(self, name):
         if name in self.categories:
             return {

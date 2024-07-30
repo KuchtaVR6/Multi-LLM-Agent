@@ -27,13 +27,15 @@ import torch
 import transformers
 from transformers.trainer_pt_utils import LabelSmoother
 from peft import PeftConfig, get_peft_model
+
+from inference_utils.toolbench.patch_utils.patch_sample_collator_specific import PatchAndSampleCollatorSpecific
+from inference_utils.toolbench.patch_utils.patch_sample_collator_toolbench import PatchAndSampleCollatorToolbench
 from supportedModels import get_model_path_on_suffix
 
 import gc
 
 from inference_utils.toolbench.infer_pipeline import DataArguments, TrainingArguments, InferDataset, Collator
 from inference_utils.toolbench.patch_utils.patch_manager import PatchManager
-from inference_utils.toolbench.patch_utils.patch_sample_collator import PatchAndSampleCollator
 from utils.trainer_utils import TrainerForPred
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
@@ -90,7 +92,7 @@ def infer_on_samples(samples, trainer, tokenizer, data_args):
     return samples
 
 
-def infer(input_files):
+def infer():
     parser = transformers.HfArgumentParser(
         (TestArguments, DataArguments, TrainingArguments)
     )
@@ -107,13 +109,13 @@ def infer(input_files):
         model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
     )
 
-    collator = PatchAndSampleCollator(patch_manager, data_args.planner_prompt_type)
-    for input_file in input_files:
-        collator.load_file(input_file)
+    toolbench_collator = PatchAndSampleCollatorToolbench(patch_manager, data_args.planner_prompt_type)
+    specific_collator = PatchAndSampleCollatorSpecific(patch_manager, data_args.planner_prompt_type,
+                                                       test_args.specific_test_sets)
 
     if test_args.regular_test_set:
         print('Predicting the ToolBench Test set...')
-        for patch, api_name, samples in collator:
+        for patch, api_name, samples in toolbench_collator:
             target_filepath = os.path.join(patch, f'toolbench_expert_predictions.json')
             if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
                 continue
@@ -125,7 +127,7 @@ def infer(input_files):
 
     if test_args.do_specific_tests:
         print('Predicting the Expert Specific Test sets...')
-        for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
+        for patch, api_name, samples in specific_collator:
             target_filepath = os.path.join(patch, f'{test_args.specific_test_sets}_expert_predictions.json')
             if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
                 continue
@@ -142,7 +144,7 @@ def infer(input_files):
 
     if test_args.test_backoff:
         print('Predicting the Toolbench Test sets on backoff...')
-        samples = infer_on_samples(collator.all_samples, caller_trainer, caller_tokenizer, data_args)
+        samples = infer_on_samples(toolbench_collator.all_samples, caller_trainer, caller_tokenizer, data_args)
         os.makedirs(training_args.output_dir, exist_ok=True)
 
         with open(os.path.join(training_args.output_dir, 'toolbench_backoff_predictions.json'), 'w') as f:
@@ -150,7 +152,7 @@ def infer(input_files):
 
     if test_args.do_specific_tests_backoff:
         print('Predicting the Expert Specific Test sets on backoff...')
-        for patch, api_name, samples in collator.load_specific_test_sets(test_args.specific_test_sets):
+        for patch, api_name, samples in specific_collator:
             target_filepath = os.path.join(patch, f'{test_args.specific_test_sets}_backoff_predictions.json')
             if os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
                 continue
@@ -173,4 +175,4 @@ def infer(input_files):
 
 
 if __name__ == "__main__":
-    infer(['output_verbose_res/inputs_for_caller.json'])
+    infer()
