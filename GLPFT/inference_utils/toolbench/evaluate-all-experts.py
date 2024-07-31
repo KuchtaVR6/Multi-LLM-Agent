@@ -1,8 +1,10 @@
 from evaluate_expert_improvements import evaluate
 import os
 
+import os
 
-def nice_two_format_output(lines, filename):
+
+def nice_format_output(lines, filename, model_types=2):
     with open(os.path.join(args.output_path, f'{filename}_results.txt'), 'w') as file:
         with open(os.path.join(args.output_path, f'{filename}_results_short.txt'), 'w') as tldr_file:
             def write_both(line):
@@ -14,15 +16,19 @@ def nice_two_format_output(lines, filename):
 
                 rest_of_lines = adapter_lines[2:]
 
-                half_point = len(rest_of_lines) // 2
+                first_limit = len(rest_of_lines) // model_types
 
-                write_both(rest_of_lines[0] + '\n' + rest_of_lines[half_point] + '\n')
+                top_results = ""
+                for i in range(model_types):
+                    top_results += rest_of_lines[first_limit*i] + '\n'
 
-                for backoff_index in range(1, len(rest_of_lines) // 2):
-                    expert_index = half_point + backoff_index
-                    file.write('-' * 20 + '\n' + rest_of_lines[backoff_index] + '\n' + rest_of_lines[expert_index] +
-                               '\n')
+                write_both(top_results)
 
+                for inner_index in range(1, first_limit):
+                    current_results = '-' * 20 + '\n'
+                    for i in range(model_types):
+                        current_results += rest_of_lines[i*first_limit + inner_index] + '\n'
+                    file.write(current_results)
 
 if __name__ == "__main__":
     import argparse
@@ -31,6 +37,7 @@ if __name__ == "__main__":
     parser.add_argument('--input_path_folder', type=str, default="")
     parser.add_argument('--output_path', type=str, default="")
     parser.add_argument('--input_path_backoff', type=str, default="")
+    parser.add_argument('--input_path_gpt_backoff', type=str, default="")
 
     args = parser.parse_args()
 
@@ -67,7 +74,7 @@ if __name__ == "__main__":
             if len(current_lines) > 2:
                 lines.append(current_lines)
 
-        nice_two_format_output(lines, f'test_specific_{test_type}')
+        nice_format_output(lines, f'test_specific_{test_type}')
 
     # toolbench dataset
     lines = []
@@ -82,13 +89,17 @@ if __name__ == "__main__":
         target_filename = f'toolbench_expert_predictions.json'
         if target_filename in filenames:
             output(f'Adapter: {dir_path}')
-            evaluate(os.path.join(dir_path, target_filename), [['caller', args.input_path_backoff]],
+            evaluate(os.path.join(dir_path, target_filename),
+                     [
+                         ['caller', args.input_path_backoff],
+                         # ['gpt4omini', args.input_path_gpt_backoff]
+                     ],
                      True, False, output_func=output)
 
         if len(current_lines) > 2:
             lines.append(current_lines)
 
-    nice_two_format_output(lines, 'test_toolbench')
+    nice_format_output(lines, 'test_toolbench')
 
     # toolalpaca datasets
     lines = []
@@ -121,4 +132,4 @@ if __name__ == "__main__":
         if len(current_lines) > 2:
             lines.append(current_lines)
 
-    nice_two_format_output(lines, f'test_alpaca_{test_type}')
+    nice_format_output(lines, f'test_alpaca_{test_type}')

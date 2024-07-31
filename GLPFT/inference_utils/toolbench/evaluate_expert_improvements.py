@@ -125,7 +125,7 @@ def evaluate(input_path_expert, input_paths_backoff_with_labels, id_sample_match
 
             em = action_em_per_ref.get(ref, 1)
 
-            output_func(f'{label}_{ref},{em:.2f},{f1:.2f},{hard_f1:.2f},{easy_f1:.2f},{len(f1_data)}')
+            output_func(f'{label}|{ref},{em:.2f},{f1:.2f},{hard_f1:.2f},{easy_f1:.2f},{len(f1_data)}')
 
 
 if __name__ == "__main__":
