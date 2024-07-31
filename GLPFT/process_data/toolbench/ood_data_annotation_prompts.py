@@ -15,7 +15,7 @@ for entry in data:
 
         if tool_name and '_for_' in tool_name:
             # Split the tool name
-            parts = tool_name.split('_for_', 1)
+            parts = tool_name.rsplit('_for_', 1)
             if len(parts) == 2:
                 name_part, identifier = parts
                 identifier = identifier.strip()

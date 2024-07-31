@@ -46,12 +46,6 @@ def build_caller_infer_samples(raw_data, planner_prompt_type):
                         tool_classifier = ToolClassifier(tool_names.split(', '))
                         mentioned_tool = tool_classifier.feed_plan(planner_prediction)
 
-                        print('=='*20)
-                        print(tool_names.split(', '),'->',mentioned_tool)
-                        print('--'*20)
-                        print(planner_prediction)
-                        print('=='*20)
-
                         reference = u['from'] + ': ' + u['value'] + "</s>" + 'caller' + ": " + d['target'] + '</s>'
                         conversations.append({
                             'tools': d['tools'],
