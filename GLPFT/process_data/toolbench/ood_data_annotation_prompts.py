@@ -67,7 +67,8 @@ for identifier, data in unique_tools.items():
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            "max_tokens": 100
         }
     }
 
