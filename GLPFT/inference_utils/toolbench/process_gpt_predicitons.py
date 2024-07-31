@@ -14,7 +14,7 @@ with open('output_verbose_res/gpt_outputs.jsonl', 'r') as f:
 prediction_map = {}
 for pred in predictions:
     custom_id = pred.get('custom_id')
-    content = pred.get('response', {}).get('body', {}).get('choices', [{}])[0].get('message', {}).get('content')
+    content = pred.get('response', {}).get('body', {}).get('choices', [{}])[-1].get('message', {}).get('content')
     if custom_id and content:
         prediction_map[custom_id.replace('request-','')] = content
 
@@ -22,10 +22,10 @@ for pred in predictions:
 for entry in original_data:
     caller_sample_id = str(entry.get('caller_sample_id'))
     if caller_sample_id in prediction_map:
-        entry['prediction'] = prediction_map[caller_sample_id]
+        entry['predictions'] = '</s>' + prediction_map[caller_sample_id]
     else:
         print("Prediction missing - 😲")
-        entry['prediction'] = None  # Or handle cases where there is no prediction
+        entry['predictions'] = None  # Or handle cases where there is no prediction
 
 output_file = 'output_verbose_res/gpt_full_outputs.json'
 

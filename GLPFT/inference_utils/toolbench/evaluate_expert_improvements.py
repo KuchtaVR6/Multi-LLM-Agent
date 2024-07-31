@@ -1,5 +1,4 @@
 import json
-import os
 from collections import defaultdict
 
 from multi_agent_utils import (evaluate_rougel, evaluate_reasoning, evaluate_action_em, evaluate_action_input_f1,
@@ -44,6 +43,9 @@ def evaluate(input_path_expert, input_paths_backoff_with_labels, id_sample_match
 
         caller_stats = defaultdict(list)
         reasoning_stats = defaultdict(list)
+
+        if 'gpt4o' in label:
+            pass
 
         for d in current_data:
             reference = d['reference']
