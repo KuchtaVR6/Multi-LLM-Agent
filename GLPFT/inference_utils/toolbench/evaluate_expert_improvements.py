@@ -6,21 +6,28 @@ from multi_agent_utils import (evaluate_rougel, evaluate_reasoning, evaluate_act
                                parse_output)
 
 
-def evaluate(input_path_expert, input_path_backoff, id_sample_matching=False, only_certain=False,
+def evaluate(input_path_expert, input_paths_backoff_with_labels, id_sample_matching=False, only_certain=False,
              output_func=print):
+
     with open(input_path_expert, encoding='utf-8') as f:
         expert_data = json.load(f)
 
-    with open(input_path_backoff, encoding='utf-8') as f:
-        if id_sample_matching:
-            ids_in = [entry['caller_sample_id'] for entry in expert_data]
-            raw_data = json.load(f)
-            original_data = [entry for entry in raw_data if entry['caller_sample_id'] in ids_in]
-        else:
-            original_data = json.load(f)
+    all_data_labeled = []
+
+    for [label, input_path_backoff] in input_paths_backoff_with_labels:
+        with open(input_path_backoff, encoding='utf-8') as f:
+            if id_sample_matching:
+                ids_in = [entry['caller_sample_id'] for entry in expert_data]
+                raw_data = json.load(f)
+                original_data = [entry for entry in raw_data if entry['caller_sample_id'] in ids_in]
+            else:
+                original_data = json.load(f)
+            all_data_labeled.append([f'base_{label}', original_data])
+
+    all_data_labeled.append(['expert_model', expert_data])
 
     output_func('name,em,f1,hard_f1,easy_f1,number_of_samples')
-    for [label, current_data] in [['backoff', original_data], ['expert', expert_data]]:
+    for [label, current_data] in all_data_labeled:
         plan_ref = []
         plan_pred = []
         hallu_cases = []
@@ -132,4 +139,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    evaluate(args.input_path_expert, args.input_path_backoff, args.id_sample_matching, args.only_certain)
+    evaluate(args.input_path_expert, [args.input_path_backoff], args.id_sample_matching, args.only_certain)

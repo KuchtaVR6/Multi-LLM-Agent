@@ -54,9 +54,10 @@ if __name__ == "__main__":
             if any(file.endswith('.safetensors') for file in filenames):
                 if target_filename in filenames:
                     if backoff_filename in filenames:
+                        base_name = dir_path.rsplit('/', 1)[0].split('/', 1)[1]
                         output(f'Adapter: {dir_path}')
                         evaluate(os.path.join(dir_path, target_filename),
-                                 os.path.join(dir_path, backoff_filename),
+                                 [[base_name, os.path.join(dir_path, backoff_filename)]],
                                  False, False, output_func=output)
                     else:
                         print(f'[MAJOR WARNING] >>> {test_type} BACKOFF MISSING FOR {dir_path}')
@@ -74,7 +75,6 @@ if __name__ == "__main__":
     for dir_path, dir_names, filenames in os.walk(args.input_path_folder):
         current_lines = []
 
-
         def output(line):
             current_lines.append(line)
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         target_filename = f'toolbench_expert_predictions.json'
         if target_filename in filenames:
             output(f'Adapter: {dir_path}')
-            evaluate(os.path.join(dir_path, target_filename), args.input_path_backoff,
+            evaluate(os.path.join(dir_path, target_filename), [['caller', args.input_path_backoff]],
                      True, False, output_func=output)
 
         if len(current_lines) > 2:
@@ -108,9 +108,10 @@ if __name__ == "__main__":
         if any(file.endswith('.safetensors') for file in filenames):
             if target_filename in filenames:
                 if backoff_filename in filenames:
+                    base_name = dir_path.rsplit('/', 1)[0].split('/', 1)[1]
                     output(f'Adapter: {dir_path}')
                     evaluate(os.path.join(dir_path, target_filename),
-                             os.path.join(dir_path, backoff_filename),
+                             [[base_name, os.path.join(dir_path, backoff_filename)]],
                              False, False, output_func=output)
                 else:
                     print(f'[MAJOR WARNING] >>> alpaca BACKOFF MISSING FOR {dir_path}')
