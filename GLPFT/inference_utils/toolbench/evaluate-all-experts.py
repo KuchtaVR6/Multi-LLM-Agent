@@ -1,8 +1,6 @@
 from evaluate_expert_improvements import evaluate
 import os
 
-import os
-
 
 def nice_format_output(lines, filename, model_types=2):
     with open(os.path.join(args.output_path, f'{filename}_results.txt'), 'w') as file:
