@@ -141,22 +141,29 @@ def infer():
         print('Predicting the Toolalpaca Test sets on experts...')
         infer_all_from_collator_and_save(toolalpaca_collator, 'alpaca_expert')
 
-    # remove all adapters from the model before the backoff tests
-    caller_model.disable_adapter_layers()
-    for adapter in patch_manager.all_patch_paths():
-        caller_model.delete_adapter(adapter)
+    if test_args.test_backoff or test_args.do_specific_tests_backoff or test_args.do_toolalpaca_tests:
 
-    if test_args.test_backoff:
-        print('Predicting the Toolbench Test sets on backoff...')
-        infer_all_from_collator_and_save(toolbench_collator, 'toolbench_backoff', False)
+        # load the model again with no adapters
+        caller_model, caller_tokenizer = load_model_with_adapters_and_tokenizer(test_args.model_suffix,
+                                                                                [],
+                                                                                test_args.trained_on_all)
 
-    if test_args.do_specific_tests_backoff:
-        print('Predicting the Expert Specific Test sets on backoff...')
-        infer_all_from_collator_and_save(specific_collator, f'{test_args.specific_test_sets}_backoff', False)
+        data_collator = Collator(caller_tokenizer, data_args)
+        caller_trainer = TrainerForPred(
+            model=caller_model, tokenizer=caller_tokenizer, args=training_args, data_collator=data_collator
+        )
 
-    if test_args.do_toolalpaca_tests_backoff:
-        print('Predicting the Toolalpaca Test sets on backoff...')
-        infer_all_from_collator_and_save(toolalpaca_collator, 'alpaca_backoff', False)
+        if test_args.test_backoff:
+            print('Predicting the Toolbench Test sets on backoff...')
+            infer_all_from_collator_and_save(toolbench_collator, 'toolbench_backoff', False)
+
+        if test_args.do_specific_tests_backoff:
+            print('Predicting the Expert Specific Test sets on backoff...')
+            infer_all_from_collator_and_save(specific_collator, f'{test_args.specific_test_sets}_backoff', False)
+
+        if test_args.do_toolalpaca_tests_backoff:
+            print('Predicting the Toolalpaca Test sets on backoff...')
+            infer_all_from_collator_and_save(toolalpaca_collator, 'alpaca_backoff', False)
 
     caller_model.to('cpu')
     caller_trainer.model.to('cpu')
