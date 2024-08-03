@@ -54,11 +54,14 @@ def process_entries(start_index, input_file_path, output_file_path, api_key, bas
             total_characters += content_length
 
             response = send_real_request(request_body, endpoint=base_url, passkey=api_key)
-            entry['predictions'] = '</s>' + response
+            if response:
+                entry['predictions'] = '</s>' + response
 
-            # Write the updated entry to the output file
-            json.dump(entry, outfile)
-            outfile.write('\n')  # Write a newline after each JSON object
+                # Write the updated entry to the output file
+                json.dump(entry, outfile)
+                outfile.write('\n')  # Write a newline after each JSON object
+            else:
+                print(f"Error: Invalid response format. ID = {entry.get('caller_sample_id', '')}")
 
 if __name__ == "__main__":
     # Set up argument parsing
