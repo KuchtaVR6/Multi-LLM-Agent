@@ -25,3 +25,5 @@ assets/.DS_Store
 /GLPFT/ood_output_res_verbose/
 /GLPFT/requests.jsonl
 /GLPFT/download_ood.sh
+/GLPFT/secrets.py
+/GLPFT/api_secrets.py
