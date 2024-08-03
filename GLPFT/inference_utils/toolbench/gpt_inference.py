@@ -1,8 +1,11 @@
 from api_secrets import api_key, base_url
+from tqdm import tqdm
+
+model = "gpt-3.5-turbo"
 
 # File paths
 input_file_path = 'output_verbose_res/inputs_for_caller.json'
-output_file_path = 'output_verbose_res/inference_gpt_requests.jsonl'
+output_file_path = f'output_verbose_res/inferenced_on_{model}.jsonl'
 
 # Initialize aggregate character count and longest message tracking
 total_characters = 0
@@ -23,26 +26,25 @@ def send_real_request(request_body, endpoint, passkey):
     if response.status_code == 200:  # Check if the request was successful
         try:
             # Extracting the answer from the JSON response
-            answer = response.json()["choices"][0]["message"]["content"]
-            print(f"Response: {answer}")
+            return response.json()["choices"][0]["message"]["content"]
         except (KeyError, IndexError):
             print(f"Error: Invalid response format. {response.text}")
     else:
         print(f"Request failed with status code: {response.status_code}")
         print(json.dumps(response.json(), indent=2))
-    return response
+    return None
 
 # Open the input file and output file
 with open(input_file_path, 'r') as infile, open(output_file_path, 'w') as outfile:
     data = json.load(infile)  # Load the JSON data from file
     num_entries = len(data)
 
-    for entry in data:
+    for entry in tqdm(data):
         identifier = entry.get("caller_sample_id", "unknown")
         prompt = entry.get("model_input_for_caller", "")
 
         request_body = {
-            "model": "gpt-3.5-turbo",
+            "model": model,
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}
@@ -54,12 +56,11 @@ with open(input_file_path, 'r') as infile, open(output_file_path, 'w') as outfil
         content_length = sum(len(message['content']) for message in request_body['messages'])
         total_characters += content_length
 
-        print(f"Confirming request for {content_length} characters:")
-        confirmation = input("Send request (yes/no): ")
-        if confirmation.lower() == 'yes':
-            response = send_real_request(request_body, endpoint=base_url, passkey=api_key)
-            print(response)
+        response = send_real_request(request_body, endpoint=base_url, passkey=api_key)
+        entry['predictions'] = '</s>' + response
 
-# Print the total number of characters and the longest message content
-print(f"Input token estimate: ~{int(total_characters/4)} tokens")
-print(f"Output token estimate: ~{int(num_entries*max_tokens/4)} tokens")
+        # Write the updated entry to the output file
+        json.dump(entry, outfile)
+        outfile.write('\n')  # Write a newline after each JSON object
+
+print('Processed finished')

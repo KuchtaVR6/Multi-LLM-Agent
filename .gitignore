@@ -26,4 +26,4 @@ assets/.DS_Store
 /GLPFT/requests.jsonl
 /GLPFT/download_ood.sh
 /GLPFT/secrets.py
-/GLPFT/api_secrets.py
+/GLPFT/inference_utils/toolbench/api_secrets.py
