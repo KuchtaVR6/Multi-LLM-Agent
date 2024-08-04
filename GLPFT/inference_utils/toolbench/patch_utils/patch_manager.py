@@ -26,6 +26,8 @@ class PatchManager:
         if not os.path.exists(root_directory):
             raise FileNotFoundError(f"Error: The directory {root_directory} does not exist.")
 
+        print(f'Loading patches from: {root_directory}')
+
         for dir_path, dir_names, filenames in os.walk(root_directory):
             if 'checkpoint-' in dir_path or dir_path.endswith('_bad_labels'):
                 continue  # skip loading checkpoints and models on old data

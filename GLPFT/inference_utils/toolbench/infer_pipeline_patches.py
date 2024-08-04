@@ -58,6 +58,8 @@ class TestArguments:
 def load_model_with_adapters_and_tokenizer(model_suffix, list_of_patch_paths, trained_on_all=False):
     model_name_or_path = get_model_path_on_suffix(model_suffix, trained_on_all)
 
+    print(f'Loading model from: {model_name_or_path}')
+
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_name_or_path
