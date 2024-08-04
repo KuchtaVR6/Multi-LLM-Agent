@@ -143,6 +143,18 @@ def infer():
         print('Predicting the Toolalpaca Test sets on experts...')
         infer_all_from_collator_and_save(toolalpaca_collator, 'alpaca_expert')
 
+    caller_model.to('cpu')
+    caller_trainer.model.to('cpu')
+    caller_trainer.model_wrapped.to('cpu')
+    del caller_model
+    del caller_tokenizer
+    del caller_trainer.model
+    del caller_trainer.model_wrapped
+    del caller_trainer
+    gc.collect()
+
+    torch.cuda.empty_cache()
+
     if test_args.test_backoff or test_args.do_specific_tests_backoff or test_args.do_toolalpaca_tests:
 
         # load the model again with no adapters
