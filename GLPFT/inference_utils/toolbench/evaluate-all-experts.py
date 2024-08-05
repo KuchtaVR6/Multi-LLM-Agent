@@ -101,10 +101,19 @@ if __name__ == "__main__":
 
     # toolalpaca datasets
     lines = []
+    categories = set()
+
+    # load category names
+    with open('dataset/toolbench/toolalpaca_api_categories.txt', 'r') as f:
+        for line in f:
+            api_fam, category = line.strip().split(': ')
+            if category != 'Travel':        # travel is never requested by the planner
+                categories.add(category.lower())
+
+    categories = list(categories)
 
     for dir_path, dir_names, filenames in os.walk(args.input_path_folder):
         current_lines = []
-
 
         def output(line):
             current_lines.append(line)
@@ -114,6 +123,19 @@ if __name__ == "__main__":
         backoff_filename = f'alpaca_backoff_predictions.json'
         if 'checkpoint-' in dir_path or dir_path.endswith('_bad_labels') or 'dev' in dir_path:
             continue  # skip loading checkpoints and models on old data
+
+        final_name = dir_path.rsplit('/', 1)[1]
+        if '_for_' in final_name:
+            continue # skip warning about endpoint level experts
+
+        corresponding_category_found = False
+        for category in categories:
+            if final_name.startswith(category):
+                corresponding_category_found = True
+
+        if not corresponding_category_found:
+            continue # skip warning about experts not covered by toolalpaca
+
         if any(file.endswith('.safetensors') for file in filenames):
             if target_filename in filenames:
                 if backoff_filename in filenames:
