@@ -34,10 +34,10 @@ class PatchManager:
             if any(file.endswith('.safetensors') for file in filenames):
                 # Get the last folder in the chain
                 last_folder = os.path.basename(dir_path).split('[', 1)[0]
-                if self.model_suffix != 'caller':
-                    last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
                 if self.trained_on_all:
                     last_folder = last_folder.rsplit('_', 1)[0]  # remove the 'all' suffix
+                if self.model_suffix != 'caller':
+                    last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
                 if last_folder.endswith('_merge'):
                     last_folder = last_folder[:-len('_merge')]
                 self.dir_path_to_api_name[dir_path] = last_folder
