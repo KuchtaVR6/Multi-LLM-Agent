@@ -33,9 +33,9 @@ class PatchManager:
                 continue  # skip loading checkpoints and models on old data
             if any(file.endswith('.safetensors') for file in filenames):
                 # Get the last folder in the chain
-                last_folder = os.path.basename(dir_path).split('[', 1)[0]
                 if self.trained_on_all:
-                    last_folder = last_folder.rsplit('_', 1)[0]  # remove the 'all' suffix
+                    cut_dir_path = dir_path.rsplit('_', 1)[0]  # remove the 'all' suffix
+                last_folder = os.path.basename(cut_dir_path).split('[', 1)[0]
                 if self.model_suffix != 'caller':
                     last_folder = last_folder.rsplit('_', 1)[0]  # remove model suffix
                 if last_folder.endswith('_merge'):
