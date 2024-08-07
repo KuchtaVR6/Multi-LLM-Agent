@@ -27,7 +27,6 @@ def send_real_request(request_body, endpoint, passkey):
             print(f"Error: Invalid response format. {response.text}")
     else:
         print(f"Request failed with status code: {response.status_code}")
-        print(json.dumps(response.json(), indent=2))
     return None
 
 def process_entries(start_index, input_file_path, output_file_path, api_key, base_url, few_shot=False):
