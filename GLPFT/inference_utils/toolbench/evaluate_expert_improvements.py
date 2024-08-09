@@ -11,17 +11,24 @@ def evaluate(input_path_expert, input_paths_backoff_with_labels, id_sample_match
     with open(input_path_expert, encoding='utf-8') as f:
         expert_data = json.load(f)
 
+    ids_in = [entry['caller_sample_id'] for entry in expert_data]
+
     all_data_labeled = []
 
     for [label, input_path_backoff] in input_paths_backoff_with_labels:
-        with open(input_path_backoff, encoding='utf-8') as f:
-            if id_sample_matching:
-                ids_in = [entry['caller_sample_id'] for entry in expert_data]
-                raw_data = json.load(f)
-                original_data = [entry for entry in raw_data if entry['caller_sample_id'] in ids_in]
+        with open(input_path_backoff, 'r') as f:
+            if '.jsonl' in input_path_backoff:
+                raw_data = []
+                for line in f:
+                        raw_data.append(json.loads(line))
             else:
-                original_data = json.load(f)
-            all_data_labeled.append([f'base_{label}', original_data])
+                raw_data = json.load(f)
+
+        if id_sample_matching:
+            original_data = [entry for entry in raw_data if entry['caller_sample_id'] in ids_in]
+        else:
+            original_data = raw_data
+        all_data_labeled.append([f'base_{label}', original_data])
 
     all_data_labeled.append(['expert_model', expert_data])
 

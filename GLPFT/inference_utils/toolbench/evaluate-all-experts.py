@@ -90,14 +90,16 @@ if __name__ == "__main__":
             evaluate(os.path.join(dir_path, target_filename),
                      [
                          ['caller', args.input_path_backoff],
-                         ['gpt4omini', args.input_path_gpt_backoff]
+                         ['gpt4omini', args.input_path_gpt_backoff],
+                         ['gpt3.5Turbo-ZeroShot', 'output_verbose_res/inferenced_on_gpt-3.5-turbo_zero_shot.jsonl'],
+                         ['gpt3.5Turbo-FewShot', 'output_verbose_res/inferenced_on_gpt-3.5-turbo.jsonl']
                      ],
                      True, False, output_func=output)
 
         if len(current_lines) > 2:
             lines.append(current_lines)
 
-    nice_format_output(lines, 'test_toolbench', 3)
+    nice_format_output(lines, 'test_toolbench', 5)
 
     # toolalpaca datasets
     lines = []
