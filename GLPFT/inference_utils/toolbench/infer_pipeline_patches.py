@@ -106,7 +106,7 @@ def infer():
     patch_manager = PatchManager(test_args.model_suffix, test_args.trained_on_all)
 
     caller_model, caller_tokenizer = load_model_with_adapters_and_tokenizer(test_args.model_suffix,
-                                                                            patch_manager.all_patch_paths(),
+                                                                            [],
                                                                             test_args.trained_on_all)
 
     data_collator = Collator(caller_tokenizer, data_args)
