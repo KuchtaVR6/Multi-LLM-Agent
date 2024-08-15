@@ -8,10 +8,12 @@ This repository is a fork of the [Multi-LLM-Agent](https://github.com/X-PLUG/Mul
 
 ## **Table of Contents**
 
-1. [Installation](#installation)
-2. [Usage](#usage)
-3. [Commands](#commands)
-4. [Examples](#examples)
+1. [Acknowledgment](#acknowledgment)
+2. [Installation](#installation)
+3. [Usage](#usage)
+4. [Commands](#commands)
+5. [Examples](#examples)
+6. [License](#license)
 
 ## **Installation**
 
@@ -247,3 +249,12 @@ To run inference using GPT-3.5 Turbo in zero-shot mode starting from index 0:
 ```bash
 python GLPFT/inference_utils/toolbench/gpt_inference.py --start 0 --learning-mode zero-shot
 ```
+
+## **License**
+
+This project is licensed under the MIT License with modifications. Permission is granted to use, modify, and distribute the code for non-commercial purposes. This means the software may not be sold or used for commercial purposes. 
+
+You may use, copy, and modify the code, provided that you include the original copyright notice and the modified license in all copies or substantial portions of the Software. The code must not be falsely claimed as your own creation without sufficient modifications that constitute a distinct implementation.
+
+The full license text is included in the `LICENSE` file.
+
