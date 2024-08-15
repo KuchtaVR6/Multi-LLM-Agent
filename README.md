@@ -2,6 +2,10 @@
 
 This repository contains the code and resources for an approach to enhancing the tool-use capabilities of small language models (LLMs) such as Llama 7B. The method presented here improves upon existing pipelines by dynamically swapping in adapters trained on specific tool groupings, resulting in significant performance gains over previous methods. This approach is particularly effective in boosting the performance of small LLMs in natural language query answering tasks that require tool-use.
 
+## **Acknowledgment**
+
+This repository is a fork of the [Multi-LLM-Agent](https://github.com/X-PLUG/Multi-LLM-Agent) codebase. The work presented here is inspired by and builds upon the multi-agent pipeline proposed by the authors in their paper titled ["Small LLMs Are Weak Tool Learners: A Multi-LLM Agent,"](https://arxiv.org/abs/2401.07324). The pipeline and methodologies provided in this repository aim to enhance and extend the original framework for improving tool-use capabilities in small language models.
+
 ## **Table of Contents**
 
 1. [Installation](#installation)
